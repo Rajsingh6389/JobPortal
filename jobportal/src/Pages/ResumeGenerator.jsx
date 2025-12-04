@@ -9,6 +9,7 @@ import {
 import ResumeLoader from "./ResumeLoader";
 import PaymentModal from "./PaymentModal";
 
+
 export default function ResumeGenerator() {
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id;
@@ -214,7 +215,7 @@ export default function ResumeGenerator() {
       )}
 
       {/* PAYMENT POPUP */}
-      <PaymentModel
+      <PaymentModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onPay={handlePay}
