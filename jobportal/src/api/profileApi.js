@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API = axios.create({
   // baseURL: "http://localhost:8080/api",
-  baseURL: "https://jobportalapplication-production.up.railway.app/api",
+  baseURL: "https://jobportalserver-production-0346.up.railway.app/api",
 
 });
 

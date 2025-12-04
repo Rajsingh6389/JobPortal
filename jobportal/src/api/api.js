@@ -3,7 +3,7 @@ import axios from "axios";
 // =========================
 // API BASE URLs
 // =========================
-const BASE_URL ="https://jobportalapplication-production.up.railway.app/api";
+const BASE_URL ="https://jobportalserver-production-0346.up.railway.app/api";
 // Resume / Payment API
 // const BASE_URL ="http://localhost:8080/api";
 
