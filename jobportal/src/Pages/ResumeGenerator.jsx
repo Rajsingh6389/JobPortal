@@ -7,7 +7,7 @@ import {
   verifyRazorpayPayment,
 } from "../api/api";
 import ResumeLoader from "./ResumeLoader";
-import PaymentModal from "./Paymentmodal";
+import Paymentmodal from "./Paymentmodal";
 
 export default function ResumeGenerator() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -214,7 +214,7 @@ export default function ResumeGenerator() {
       )}
 
       {/* PAYMENT POPUP */}
-      <PaymentModal
+      <Paymentmodal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onPay={handlePay}
