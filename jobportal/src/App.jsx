@@ -18,8 +18,10 @@ import Unauthorized from './Pages/Unauthorized';
 import AdminUploadJob from './Pages/AdminUploadJob';
 import ProtectedAdminRoute from './LandingPage/ProtectedAdminRoute';
 import AdminApplications from './Pages/AdminApplications';
-import AboutUs from './Pages/Aboutus';
 import AdminUserProfile from './Pages/AdminUserProfile';
+import VoiceAgent from './Pages/VoiceAgent';
+import ResumeGenerator from './Pages/ResumeGenerator';
+import AboutUs from './Pages/AboutUs';
 
 function App() {
   const theme = createTheme({
@@ -59,12 +61,13 @@ function App() {
     <MantineProvider defaultColorScheme='dark' theme={theme}>
       <BrowserRouter>
         <Header />
+        <VoiceAgent />
         <Routes>
           <Route path="/find-jobs" element={<Findjobs />} />
           <Route path="/find-jobs/:id" element={<Applyjob />} />
           <Route path='/find-talent' element={<FindTalent />} />
           <Route path='/find-talent/user/:id' element={<AdminUserProfile />} />
-
+          <Route path='/resume-generator' element={<ResumeGenerator />}/>
           <Route path='/login' element={<LoginPage />} />
           <Route path='/signup' element={<SignupPage />} />
           <Route path="/profile" element={<ProfilePage />} />

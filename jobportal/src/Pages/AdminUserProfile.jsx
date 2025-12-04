@@ -24,14 +24,18 @@ export default function AdminUserProfile() {
   const [user, setUser] = useState(null);
 
   const fetchUser = async () => {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await axios.get(
-      `http://localhost:8080/api/profile/user/${id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const res = await axios.get(
+        `http://localhost:8080/api/profile/user/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    setUser(res.data);
+      setUser(res.data);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
   };
 
   useEffect(() => {
@@ -45,19 +49,22 @@ export default function AdminUserProfile() {
       </div>
     );
 
+  const skillsArr = user.skills ? user.skills.split(",") : [];
+
   return (
-    <div className="min-h-screen bg-mine-shaft-950 text-white p-10 flex justify-center animate-[fadeIn_0.6s_ease]">
+    <div className="min-h-screen bg-mine-shaft-950 text-white p-6 md:p-10 flex justify-center animate-[fadeIn_0.6s_ease]">
 
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-3 gap-10">
 
-        {/* ================= LEFT PROFILE PANEL ================= */}
-        <div className="lg:col-span-1 bg-mine-shaft-900/80 border border-mine-shaft-700 rounded-2xl shadow-xl p-8 backdrop-blur-xl">
+        {/* =============== LEFT PROFILE CARD =============== */}
+        <div className="bg-mine-shaft-900/80 border border-mine-shaft-700 rounded-2xl shadow-xl p-8 backdrop-blur-xl">
 
           {/* Profile Picture */}
           <div className="flex justify-center">
             <img
               src={user.img || avtimg}
-              className="w-36 h-36 rounded-full border-4 border-bright-sun-300 shadow-2xl"
+              alt="profile"
+              className="w-36 h-36 rounded-full border-4 border-bright-sun-300 shadow-2xl object-cover"
             />
           </div>
 
@@ -77,7 +84,7 @@ export default function AdminUserProfile() {
               size="lg"
               variant="filled"
               color={user.userType === "ADMIN" ? "red" : "yellow"}
-              className="shadow-md"
+              className="shadow-md text-black"
             >
               {user.userType}
             </Badge>
@@ -87,35 +94,53 @@ export default function AdminUserProfile() {
 
           {/* CONTACT BUTTONS */}
           <div className="space-y-3">
-            <button className="w-full flex justify-center items-center gap-2 py-2 bg-mine-shaft-800 rounded-xl hover:bg-mine-shaft-700 border border-bright-sun-300 transition">
-              <IconPhone /> Contact
+            <button
+              className="w-full flex justify-center items-center gap-2 py-2 bg-mine-shaft-800 rounded-xl 
+              hover:bg-mine-shaft-700 border border-bright-sun-300 transition"
+            >
+              <IconPhone /> Contact User
             </button>
 
-            <div className="flex justify-center gap-4 text-bright-sun-300 text-3xl">
-              <IconBrandLinkedin className="cursor-pointer hover:scale-110 transition" />
-              <IconBrandGithub className="cursor-pointer hover:scale-110 transition" />
+            {/* Social Links */}
+            <div className="flex justify-center gap-6 text-bright-sun-300 text-3xl">
+              <a
+                href={user.linkedin || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${user.linkedin ? "hover:scale-110" : "opacity-40 cursor-not-allowed"} transition`}
+              >
+                <IconBrandLinkedin />
+              </a>
+
+              <a
+                href={user.github || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${user.github ? "hover:scale-110" : "opacity-40 cursor-not-allowed"} transition`}
+              >
+                <IconBrandGithub />
+              </a>
             </div>
           </div>
 
           <Divider className="my-6" />
 
           {/* QUICK INFO */}
-          <div className="space-y-3 text-mine-shaft-300">
+          <div className="space-y-2 text-mine-shaft-300">
             <p>📅 Joined: {user.createdAt?.split("T")[0]}</p>
             <p>🔄 Updated: {user.updatedAt?.split("T")[0]}</p>
           </div>
-
         </div>
 
-        {/* ================= RIGHT SIDE DETAILS PANEL ================= */}
-        <div className="lg:col-span-2 space-y-8">
+        {/* =============== RIGHT DETAILS PANEL =============== */}
+        <div className="lg:col-span-2 space-y-10">
 
-          {/* ABOUT */}
+          {/* ABOUT SECTION */}
           <div className="bg-mine-shaft-900/70 p-6 rounded-2xl border border-mine-shaft-700 shadow hover:shadow-xl transition">
             <h2 className="text-2xl font-semibold text-bright-sun-200 flex items-center gap-2">
               <IconUser /> About
             </h2>
-            <p className="text-mine-shaft-300 mt-2 text-lg">
+            <p className="text-mine-shaft-300 mt-3 text-lg leading-relaxed">
               {user.about || "No details available"}
             </p>
           </div>
@@ -126,7 +151,7 @@ export default function AdminUserProfile() {
               <IconBriefcase /> Job Preferences
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 text-mine-shaft-300 text-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-5 text-mine-shaft-300 text-lg">
 
               <p className="flex items-center gap-2">
                 <IconIdBadge className="text-bright-sun-300" />
@@ -142,41 +167,42 @@ export default function AdminUserProfile() {
                 <IconCurrencyRupee className="text-bright-sun-300" />
                 <b>Expected Salary:</b> {user.expectedSalary || "Not added"}
               </p>
+
             </div>
           </div>
 
           {/* SKILLS */}
           <div className="bg-mine-shaft-900/70 p-6 rounded-2xl border border-mine-shaft-700 shadow hover:shadow-xl transition">
-            <h2 className="text-2xl font-semibold text-bright-sun-200">
-              Skills
-            </h2>
+            <h2 className="text-2xl font-semibold text-bright-sun-200">Skills</h2>
 
-            <div className="flex flex-wrap gap-3 mt-4">
-              {(user.skills?.split(",") || []).map((skill, i) => (
-                <Badge
-                  key={i}
-                  size="lg"
-                  color="yellow"
-                  className="bg-mine-shaft-800 border border-bright-sun-300 text-bright-sun-200 px-4 py-2 shadow-md hover:scale-105 transition"
-                >
-                  {skill.trim()}
-                </Badge>
-              ))}
-            </div>
+            {skillsArr.length ? (
+              <div className="flex flex-wrap gap-3 mt-4">
+                {skillsArr.map((skill, i) => (
+                  <Badge
+                    key={i}
+                    size="lg"
+                    color="yellow"
+                    className="bg-mine-shaft-800 border border-bright-sun-300 text-bright-sun-200 px-4 py-2 shadow-md hover:scale-105 transition"
+                  >
+                    {skill.trim()}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-mine-shaft-400 mt-3">No skills added</p>
+            )}
           </div>
 
           {/* RESUME */}
-          {user.resume && (
+          {user.resumeLink && (
             <div className="bg-mine-shaft-900/70 p-6 rounded-2xl border border-bright-sun-300 shadow-xl hover:shadow-2xl transition">
               <h2 className="text-2xl font-semibold text-bright-sun-200 flex items-center gap-2">
                 <IconFileCv /> Resume
               </h2>
 
               <button
-                onClick={() =>
-                  window.open(`http://localhost:8080/${user.resume}`, "_blank")
-                }
-                className="mt-4 flex items-center gap-2 px-5 py-3 bg-bright-sun-300 text-black rounded-xl hover:bg-bright-sun-200 transition font-semibold"
+                onClick={() => window.open(user.resumeLink, "_blank")}
+                className="mt-5 flex items-center gap-2 px-6 py-3 bg-bright-sun-300 text-black rounded-xl hover:bg-bright-sun-200 transition font-semibold"
               >
                 <IconDownload /> View / Download Resume
               </button>
@@ -195,10 +221,9 @@ export default function AdminUserProfile() {
               <li>📌 Account Type — {user.userType}</li>
             </ul>
           </div>
-
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }

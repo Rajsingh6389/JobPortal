@@ -18,7 +18,7 @@ export default function FindTalent() {
     } catch (err) {
       console.error("Failed to fetch users", err);
     }
-    setTimeout(() => setLoading(false), 900);
+    setTimeout(() => setLoading(false), 700);
   };
 
   useEffect(() => {
@@ -33,21 +33,21 @@ export default function FindTalent() {
     );
 
   return (
-    <div className="min-h-screen bg-mine-shaft-950 text-white px-6 py-12 font-Poppins">
+    <div className="min-h-screen bg-mine-shaft-950 text-white px-6 sm:px-10 lg:px-20 py-14 font-Poppins">
 
       {/* HEADER */}
-      <div className="text-center mb-10 animate-[fadeIn_0.6s_ease]">
-        <h1 className="text-4xl font-bold text-bright-sun-300 flex justify-center gap-2 items-center">
-          <IconUsers size={40} /> Find Top Talent
+      <div className="text-center mb-12 animate-[fadeIn_0.6s_ease] space-y-2">
+        <h1 className="text-4xl sm:text-5xl font-bold text-bright-sun-300 flex justify-center gap-2 items-center">
+          <IconUsers size={42} /> Find Top Talent
         </h1>
-        <p className="text-mine-shaft-400 mt-2">
-          Explore skilled candidates and view complete profiles instantly.
+        <p className="text-mine-shaft-400 text-base sm:text-lg max-w-2xl mx-auto">
+          Explore verified professionals and instantly view their full details, skills & experience.
         </p>
       </div>
 
       <Divider size="xs" className="mb-10 opacity-40" />
 
-      {/* GRID */}
+      {/* TALENT GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 animate-[fadeIn_0.8s_ease]">
 
         {users.map((user) => (
@@ -55,20 +55,20 @@ export default function FindTalent() {
             key={user.id}
             onClick={() => navigate(`/find-talent/user/${user.id}`)}
             className="
-              group bg-mine-shaft-900/70 backdrop-blur-xl 
-              border border-mine-shaft-700 
-              rounded-2xl p-6 cursor-pointer shadow-lg 
-              hover:shadow-bright-sun-300/20 hover:-translate-y-2 
-              transition-all duration-300 hover:border-bright-sun-300
+              group bg-mine-shaft-900/70 backdrop-blur-xl
+              border border-mine-shaft-700 rounded-2xl p-6 cursor-pointer shadow-lg
+              hover:shadow-bright-sun-300/25 hover:-translate-y-2 hover:border-bright-sun-300
+              transition-all duration-300
             "
           >
 
-            {/* Profile Header */}
+            {/* TOP SECTION: AVATAR + BASIC INFO */}
             <div className="flex items-center gap-4">
               <img
-                src={avtimg}
-                className="w-16 h-16 rounded-full border-2 border-bright-sun-300 
-                           group-hover:scale-105 transition-transform duration-300"
+                src={user.img || avtimg}
+                className="w-16 h-16 rounded-full border-2 border-bright-sun-300 shadow-lg 
+                           group-hover:shadow-bright-sun-400/40 group-hover:scale-105 
+                           transition-all duration-300"
                 alt="profile"
               />
 
@@ -77,7 +77,9 @@ export default function FindTalent() {
                   {user.name}
                 </h2>
 
-                <p className="text-sm text-mine-shaft-400">{user.role || "No role"}</p>
+                <p className="text-sm text-mine-shaft-400">
+                  {user.role || "No role added"}
+                </p>
 
                 <Badge
                   color={user.userType === "ADMIN" ? "red" : "yellow"}
@@ -90,35 +92,41 @@ export default function FindTalent() {
               </div>
             </div>
 
-            {/* Location */}
-            <p className="mt-4 flex items-center gap-2 text-mine-shaft-300 text-sm">
-              <IconMapPin size={16} /> {user.location || "Location not added"}
+            {/* LOCATION */}
+            <p className="mt-5 flex items-center gap-2 text-mine-shaft-300 text-sm">
+              <IconMapPin size={16} className="text-bright-sun-300" />
+              {user.location || "Location not added"}
             </p>
 
-            {/* Skills */}
+            {/* SKILLS */}
             <div className="mt-4 flex flex-wrap gap-2">
-              {(user.skills?.split(",") || []).slice(0, 5).map((skill, i) => (
+              {(user.skills?.split(",") || []).slice(0, 6).map((skill, i) => (
                 <span
                   key={i}
-                  className="px-2 py-1 text-xs bg-mine-shaft-800 border 
-                             border-mine-shaft-700 rounded-lg group-hover:border-bright-sun-300
-                             transition-all duration-300"
+                  className="
+                    px-2.5 py-1 text-xs rounded-lg bg-mine-shaft-800 border border-mine-shaft-700 
+                    group-hover:border-bright-sun-300/60 transition-all duration-300
+                  "
                 >
-                  {skill}
+                  {skill.trim()}
                 </span>
               ))}
 
-              {user.skills?.split(",").length > 5 && (
-                <span className="text-xs text-bright-sun-300">+ more</span>
+              {user.skills?.split(",").length > 6 && (
+                <span className="text-xs text-bright-sun-300 font-semibold">
+                  + more
+                </span>
               )}
             </div>
 
-            {/* Rating */}
-            <div className="flex items-center gap-1 text-bright-sun-300 mt-4">
-              <IconStar size={18} /> <span className="text-sm">Highly Recommended</span>
+            {/* RATING — STATIC FOR NOW (Can be dynamic later) */}
+            <div className="flex items-center gap-1 text-bright-sun-300 mt-5">
+              <IconStar size={18} /> 
+              <span className="text-sm">Highly Recommended</span>
             </div>
           </div>
         ))}
+
       </div>
     </div>
   );
