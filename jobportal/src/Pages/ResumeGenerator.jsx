@@ -7,8 +7,7 @@ import {
   verifyRazorpayPayment,
 } from "../api/api";
 import ResumeLoader from "./ResumeLoader";
-import PaymentModal from "./PaymentModal";
-
+import PaymentModal from "./PaymentModal"
 
 export default function ResumeGenerator() {
   const user = JSON.parse(localStorage.getItem("user"));

@@ -102,7 +102,7 @@ function Jobs() {
         ) : jobs.length > 0 ? (
           jobs.map((job, i) => (
             <div
-              key={job.id}
+              key={i}
               className="opacity-0 animate-fadeInUp"
               style={{ animationDelay: `${i * 70}ms` }}
             >
