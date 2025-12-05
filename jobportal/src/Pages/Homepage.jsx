@@ -9,12 +9,12 @@ import Subscribe from '../LandingPage/Subscribe';
 
 function Homepage() {
   return (
-    <div className='min-h-[100vh] bg-mine-shaft-950 font-["poppins"]'>
+    <div className='min-h-screen w-full bg-mine-shaft-950 font-["poppins"] overflow-x-hidden'>
       <Dreamjob />
       <Companies />
       <JobCategory />
       <Working />
-      <Testinomials/>
+      <Testinomials />
       <Subscribe />
     </div>
   )

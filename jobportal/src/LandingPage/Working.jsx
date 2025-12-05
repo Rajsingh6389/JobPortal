@@ -1,67 +1,89 @@
-import React from 'react'
-import { work } from '../Data/Data'
-import avtimg from '../assets/avatar.png'
-import { Avatar } from '@mantine/core';
-
+import React from "react";
+import { work } from "../Data/Data";
+import avtimg from "../assets/avatar.png";
+import { Avatar } from "@mantine/core";
 
 function Working() {
-    return (
-        <div className='mt-14 pb-5'>
-            <div className='text-4xl text-center font-semibold mb-3 text-mine-shaft-100'>
-                How <span className='text-bright-sun-400'>it Works</span>
+  return (
+    <section className="mt-20 pb-16 px-4 sm:px-8 md:px-16 lg:px-24">
+
+      {/* HEADER */}
+      <h2 className="text-center text-3xl sm:text-4xl font-semibold text-mine-shaft-100 mb-3">
+        How <span className="text-bright-sun-400">it Works</span>
+      </h2>
+
+      <p className="text-center max-w-xl mx-auto text-mine-shaft-300 text-base sm:text-lg mb-10">
+        Effortlessly navigate the process and land your dream job.
+      </p>
+
+      {/* GRID LAYOUT (IMAGE LEFT / STEPS RIGHT) */}
+      <div className="
+        grid grid-cols-1 lg:grid-cols-2 
+        gap-12 lg:gap-20 items-start
+      ">
+        
+        {/* LEFT IMAGE */}
+        <div className="relative flex justify-center">
+          <img
+            src="/Working/Girl.png"
+            alt="Job Portal Illustration"
+            className="w-64 sm:w-80 md:w-[22rem] lg:w-[26rem]"
+          />
+
+          {/* FLOATING CARD */}
+          <div
+            className="
+              absolute right-2 sm:right-10 top-10 
+              bg-mine-shaft-900/80 backdrop-blur-md 
+              border border-bright-sun-300/50 
+              rounded-xl p-4 flex gap-3 
+              shadow-lg
+            "
+          >
+            <Avatar src={avtimg} alt="profile" />
+
+            <div className="text-white">
+              <div className="font-semibold text-sm">Complete Your Profile</div>
+              <div className="text-xs text-mine-shaft-400">70% Completed</div>
             </div>
-
-            <div className='text-lg mx-auto pb-5 text-mine-shaft-300 text-center w-1/2'>
-                Effortlessly navigate through the process and land your dream job
-            </div>
-
-            <div className='flex gap-16 px-36  items-start'>
-
-                {/* Left Image */}
-                <div className='relative items-center'>
-                    <img src='/Working/Girl.png' alt='Job Portal' className='w-[30rem]' />
-                    <div className=
-                    'text-mine-shaft-100 right-0 top-20  items-center backdrop-blur-md absolute  border p-2 rounded-lg border-bright-sun-200 '>
-                        <Avatar src={avtimg} alt="it's me" />
-                        <div className='font-medium text-sm'>
-                            <div>Complete Your Profile</div>
-                            <div className='opacity-50'>70% Completed</div>
-                        </div>
-
-                    </div>
-                </div>
-
-                {/* Right Side List */}
-                <div className='flex flex-col gap-8 pt-10 pl-20'>
-                    {
-                        work.map((item, index) => {
-                            console.log(item.name)
-
-                            return (
-                                <div key={index} className='flex items-center gap-4'>
-                                    <div className='border rounded-full p-2 bg-bright-sun-300'>
-                                        <img
-                                            src={`/Working/Apply for job.png`}
-                                            alt={item.name}
-                                            className="w-10 h-10"
-                                        />
-
-
-                                    </div>
-                                    <div className='text-mine-shaft-100'>
-
-                                        <div className='font-semibold text-lg'>{item.name}</div>
-                                        <div className='text-mine-shaft-400'>{item.desc}</div>
-                                    </div>
-                                </div>
-                            )
-                        })
-                    }
-                </div>
-
-            </div>
+          </div>
         </div>
-    )
+
+        {/* RIGHT STEPS */}
+        <div className="flex flex-col gap-8 pt-4">
+          {work.map((item, index) => (
+            <div
+              key={index}
+              className="
+                flex items-start gap-4 
+                hover:translate-x-2 transition-all
+              "
+            >
+              {/* ICON */}
+              <div className="border rounded-full p-3 bg-bright-sun-300 shadow-md">
+                <img
+                  src={`/Working/${item.icon}.png`}   // dynamic icon
+                  alt={item.name}
+                  className="w-10 h-10"
+                />
+              </div>
+
+              {/* TEXT */}
+              <div>
+                <h3 className="text-mine-shaft-100 text-lg font-semibold">
+                  {item.name}
+                </h3>
+                <p className="text-mine-shaft-400 text-sm">
+                  {item.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </section>
+  );
 }
 
-export default Working
+export default Working;
