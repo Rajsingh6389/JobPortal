@@ -28,7 +28,7 @@ export default function AdminUserProfile() {
       const token = localStorage.getItem("token");
 
       const res = await axios.get(
-        `http://localhost:8080/api/profile/user/${id}`,
+        `https://jobportalapplication-production.up.railway.app/api/profile/user/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
