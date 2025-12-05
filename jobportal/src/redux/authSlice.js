@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginApi, signupApi } from "../api/authApi";
-import { getProfileApi, updateProfileApi } from "../api/profileApi"; // FIXED
+import { getProfileApi, updateProfileApi } from "../api/profileApi";
 
 // LOGIN
 export const loginUser = createAsyncThunk(
@@ -8,14 +8,14 @@ export const loginUser = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginApi(data);
-      return res.data; // { token, userId, name, email, userType }
+      return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Login failed" });
     }
   }
 );
 
-// FETCH PROFILE
+// FETCH PROFILE (AFTER LOGIN OR REFRESH)
 export const fetchProfile = createAsyncThunk(
   "auth/fetchProfile",
   async (_, { rejectWithValue }) => {
@@ -23,7 +23,7 @@ export const fetchProfile = createAsyncThunk(
       const res = await getProfileApi();
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data || { message: "Failed to fetch profile" });
     }
   }
 );
@@ -36,7 +36,7 @@ export const updateProfile = createAsyncThunk(
       const res = await updateProfileApi(data);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data || { message: "Update failed" });
     }
   }
 );
@@ -61,7 +61,7 @@ const authSlice = createSlice({
   initialState: {
     user: JSON.parse(localStorage.getItem("user")) || null,
     token: localStorage.getItem("token") || null,
-    userType: localStorage.getItem("userType") || null, // ⭐ NEW FOR ADMIN ACCESS
+    userType: localStorage.getItem("userType") || null,
     loggedIn: !!localStorage.getItem("token"),
     loading: false,
     error: "",
@@ -73,15 +73,21 @@ const authSlice = createSlice({
       state.token = null;
       state.userType = null;
       state.loggedIn = false;
+      localStorage.clear();
+    },
 
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("userType");
+    // 🔥 Only for instant UI update after payment success
+    upgradeToPremium: (state) => {
+      if (!state.user) return;
+      state.user.isPremium = true;
+      state.user.paymentStatus = true;
+      localStorage.setItem("user", JSON.stringify(state.user));
     },
   },
 
   extraReducers: (builder) => {
     builder
+
       // LOGIN
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
@@ -91,12 +97,16 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
 
+        // Basic login data
         const userData = {
           id: action.payload.userId,
           name: action.payload.name,
           email: action.payload.email,
-          userType: action.payload.userType, // ⭐ STORE ADMIN / USER
+          userType: action.payload.userType,
         };
+
+        // Premium status MUST come from DB profile (fetchProfile)
+        userData.isPremium = false;
 
         state.user = userData;
         state.token = action.payload.token;
@@ -110,48 +120,51 @@ const authSlice = createSlice({
 
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          typeof action.payload === "string"
-            ? action.payload
-            : action.payload.message || "Login failed";
+        state.error = action.payload?.message || "Login failed";
       })
 
       // SIGNUP
       .addCase(signupUser.pending, (state) => {
         state.loading = true;
-        state.error = "";
       })
+
       .addCase(signupUser.fulfilled, (state) => {
         state.loading = false;
       })
+
       .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message || "Signup failed";
+        state.error = action.payload?.message || "Signup failed";
       })
 
-      // FETCH PROFILE
+      // 🌟 FETCH PROFILE — ALWAYS SYNC PREMIUM STATUS
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.user = action.payload;
+
+        // 🔥 IMPORTANT: Always map DB → Redux
+        state.user.isPremium = !!action.payload.paymentStatus;
+
         state.userType = action.payload.userType;
 
-        localStorage.setItem("user", JSON.stringify(action.payload));
-        localStorage.setItem("userType", action.payload.userType);
+        localStorage.setItem("user", JSON.stringify(state.user));
+        localStorage.setItem("userType", state.userType);
       })
 
       // UPDATE PROFILE
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = action.payload;
 
-        // If admin changed userType manually
+        state.user.isPremium = !!action.payload.paymentStatus;
+
         if (action.payload.userType) {
           state.userType = action.payload.userType;
           localStorage.setItem("userType", action.payload.userType);
         }
 
-        localStorage.setItem("user", JSON.stringify(action.payload));
+        localStorage.setItem("user", JSON.stringify(state.user));
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, upgradeToPremium } = authSlice.actions;
 export default authSlice.reducer;

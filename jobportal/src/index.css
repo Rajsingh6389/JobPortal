@@ -58,3 +58,26 @@ body {
     animation: fadeInUp 0.4s ease forwards;
   }
   
+  @keyframes glassGlow {
+    0% { transform: scale(1) translate(-5%, -5%); }
+    50% { transform: scale(1.2) translate(5%, 5%); }
+    100% { transform: scale(1) translate(-5%, -5%); }
+  }
+  
+  .animate-glassGlow {
+    animation: glassGlow 6s infinite ease-in-out;
+  }
+  /* index.css */
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+.font-sans { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeSlideUp { animation: fadeSlideUp 0.6s ease both; }
+
+  

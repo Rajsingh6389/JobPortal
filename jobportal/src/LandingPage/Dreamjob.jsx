@@ -1,115 +1,199 @@
-import React from "react";
-import studentimg from "../assets/Student.png";
-import { TextInput, Avatar } from "@mantine/core";
-import { IconSearch } from "@tabler/icons-react";
-
-import avatar1 from "../assets/avatar.png";
-import avatar2 from "../assets/avatar-2.png";
-import avatar3 from "../assets/avatar-3.png";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { IconUpload, IconSettings, IconFileText, IconStars, IconCheck } from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
+import { createOrderApi, verifyPaymentApi } from "../api/paymentApi";
+import { fetchProfile } from "../redux/authSlice";
 
 function Dreamjob() {
+  const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // ⭐ Always fetch latest profile from DB
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
+
+  // ⭐ Razorpay Payment Function
+  const startPayment = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      // 1️⃣ Create Razorpay Order
+      const { data: order } = await createOrderApi(user.id, 99);
+
+      const options = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Premium Resume Tools",
+        description: "Unlock full features",
+        order_id: order.orderId,
+
+        handler: async function (response) {
+          const verifyData = {
+            userId: user.id,
+            orderId: response.razorpay_order_id,
+            paymentId: response.razorpay_payment_id,
+            signature: response.razorpay_signature,
+          };
+
+          // 2️⃣ Verify payment
+          const verifyRes = await verifyPaymentApi(verifyData);
+
+          if (verifyRes.data.success) {
+            alert("🎉 Payment Successful! Premium Unlocked.");
+
+            // Update Redux with latest profile
+            dispatch(fetchProfile());
+          } else {
+            alert("Payment verification failed!");
+          }
+        },
+
+        theme: { color: "#ffbd20" },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      alert("Payment initialization failed.");
+    }
+  };
+
   return (
     <section
       className="
-        flex flex-col-reverse lg:flex-row 
-        items-center justify-between 
         px-6 sm:px-10 md:px-16 lg:px-20 
-        pt-10 lg:pt-20 gap-10
+        py-16 lg:py-24 
+        flex flex-col lg:flex-row 
+        justify-between items-center gap-12 lg:gap-20
       "
     >
-      {/* LEFT CONTENT */}
-      <div className="flex flex-col w-full lg:w-1/2 space-y-5">
+      {/* LEFT SIDE */}
+      <div className="w-full lg:w-1/2 space-y-6">
 
-        {/* TITLE */}
-        <h1 className="
-            text-4xl sm:text-5xl lg:text-6xl 
-            font-bold text-mine-shaft-100 
-            leading-tight
-            [&>span]:text-bright-sun-400
-          "
-        >
-          Find Your <span>Dream</span> <span>Job</span>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+          Unlock <span className="text-bright-sun-400">Premium</span> Resume Tools
         </h1>
 
-        {/* SUBTEXT */}
-        <p className="text-mine-shaft-200 text-base sm:text-lg max-w-lg">
-          Good life begins with a good job. Explore thousands of opportunities tailored to your skills.
+        <p className="text-mine-shaft-300 text-base sm:text-lg max-w-md">
+          Upload your resume and instantly generate stunning ATS-friendly templates with AI-powered enhancement.
         </p>
 
-        {/* SEARCH BAR AREA */}
-        <div className="
-            flex flex-col sm:flex-row 
-            gap-4 sm:gap-3 pt-5 
-            w-full sm:w-[90%] lg:w-full
+        <div className="space-y-4">
+          {[
+            "AI-powered Resume Enhancement",
+            "Convert Resume into 10+ Modern Templates",
+            "ATS Score Analyzer & Improvements",
+            "Instant PDF Export in High Quality"
+          ].map((feature, index) => (
+            <div key={index} className="flex items-start sm:items-center gap-3 text-mine-shaft-200">
+              <IconCheck size={22} className="text-bright-sun-400" />
+              <span className="text-sm sm:text-base">{feature}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Upload Resume Button */}
+        <button
+          onClick={() =>
+            user?.isPremium ? navigate("/resume-tools") : startPayment()
+          }
+          className="
+            mt-6 bg-bright-sun-400 hover:bg-bright-sun-300 
+            text-black font-semibold px-6 py-3 rounded-xl 
+            flex items-center gap-2 w-fit active:scale-95 transition
           "
         >
-          {/* Job Title */}
-          <TextInput
-            variant="unstyled"
-            placeholder="Software Engineer"
-            label="Job Title"
-            className="
-              border border-mine-shaft-400
-              rounded-md px-2 py-3
-              text-mine-shaft-200 hover:border-bright-sun-300
-              transition w-full
-            "
-          />
+          <IconUpload size={22} /> 
+          {user?.isPremium ? "Go To Premium Tools" : "Upload Resume"}
+        </button>
 
-          {/* Job Type */}
-          <TextInput
-            variant="unstyled"
-            placeholder="Full-time"
-            label="Job Type"
-            className="
-              border border-mine-shaft-400
-              rounded-md px-2 py-3
-              text-mine-shaft-200 hover:border-bright-sun-300
-              transition w-full
-            "
-          />
-
-          {/* Search button */}
-          <button
-            type="button"
-            className="
-              bg-bright-sun-500 hover:bg-bright-sun-400
-              rounded-md flex items-center justify-center
-              p-4 sm:p-5
-              transition active:scale-95
-              w-full sm:w-16
-            "
-          >
-            <IconSearch className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
-          </button>
-        </div>
       </div>
 
-      {/* RIGHT SIDE IMAGE + AVATARS */}
-      <div className="w-full lg:w-1/2 flex justify-center items-center relative">
-        <img
-          src={studentimg}
-          alt="student"
-          className="w-60 sm:w-72 md:w-80 lg:w-[22rem] mx-auto drop-shadow-xl"
-        />
-
-        {/* Avatar Group (Floating) */}
+      {/* RIGHT SIDE — PREMIUM CARD */}
+      <div
+        className="
+          relative group overflow-hidden
+          w-full lg:w-1/2 
+          bg-white/5 backdrop-blur-xl
+          border border-white/15 rounded-2xl 
+          p-6 sm:p-8 
+          shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+          transition-all duration-500
+          hover:shadow-[0_6px_35px_rgba(255,215,0,0.2)]
+          hover:scale-[1.02]
+        "
+      >
         <div
           className="
-            absolute right-4 bottom-4 sm:right-10 sm:bottom-10 
-            bg-mine-shaft-900/80 backdrop-blur-md 
-            border border-bright-sun-300/40 rounded-xl 
-            p-2 shadow-xl
+            absolute inset-0 opacity-[0.12]
+            bg-[radial-gradient(circle_at_center,white,transparent_55%)]
+            animate-glassGlow pointer-events-none
           "
-        >
-          <Avatar.Group spacing="sm">
-            <Avatar src={avatar1} />
-            <Avatar src={avatar2} />
-            <Avatar src={avatar3} />
-            <Avatar>+5</Avatar>
-          </Avatar.Group>
+        ></div>
+
+        <div
+          className="
+            absolute inset-0 h-full w-full 
+            bg-gradient-to-r from-transparent via-white/10 to-transparent
+            translate-x-[-150%] 
+            group-hover:translate-x-[150%] 
+            transition-all duration-[1300ms] ease-out
+          "
+        ></div>
+
+        <div className="relative z-10 space-y-6">
+
+          <h2 className="text-2xl sm:text-3xl font-semibold text-white">Premium Plan</h2>
+          <p className="text-mine-shaft-300 text-sm sm:text-base">
+            Unlock all resume tools, templates, and AI features.
+          </p>
+
+          <div className="text-bright-sun-400 text-4xl sm:text-5xl font-bold">₹99</div>
+          <p className="text-mine-shaft-400 text-sm sm:text-base">
+            One-time payment — lifetime access
+          </p>
+
+          <hr className="border-white/20" />
+
+          <div className="space-y-4">
+            {[
+              { icon: IconStars, label: "All Resume Templates Unlocked" },
+              { icon: IconFileText, label: "AI Resume Writer + Summary Generator" },
+              { icon: IconSettings, label: "ATS Keyword Optimization" }
+            ].map((item, i) => (
+              <div key={i} className="flex items-start sm:items-center gap-3 text-white">
+                <item.icon size={22} className="text-bright-sun-400" />
+                <span className="text-sm sm:text-base">{item.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ⭐ PREMIUM BUTTON */}
+          <button
+            onClick={() =>
+              user?.isPremium ? navigate("/premium") : startPayment()
+            }
+            className="
+              mt-4 bg-bright-sun-400 text-black text-base sm:text-lg font-semibold 
+              p-3 rounded-xl hover:bg-bright-sun-300 
+              transition active:scale-95 w-full sm:w-auto
+            "
+          >
+            {user?.isPremium ? "Go To Premium Tools" : "Get Premium for ₹99"}
+          </button>
+
         </div>
       </div>
+
     </section>
   );
 }

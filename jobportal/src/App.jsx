@@ -1,11 +1,12 @@
-import './App.css'
-import Homepage from './Pages/Homepage'
+import './App.css';
+import Homepage from './Pages/Homepage';
 import '@mantine/core/styles.css';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import '@mantine/core/styles.css';
-// ‼️ import carousel styles after core package styles
 import '@mantine/carousel/styles.css';
+import AiResumeBuilder from "./Pages/AiResumeBuilder";
+import PremiumTemplates from "./Pages/PremiumTemplates";
+import PdfExport from "./Pages/PdfExport";
 import Findjobs from './Pages/Findjobs';
 import Header from './Header/Header';
 import Footer from './Footer/Footer';
@@ -22,55 +23,75 @@ import AdminUserProfile from './Pages/AdminUserProfile';
 import VoiceAgent from './Pages/VoiceAgent';
 import ResumeGenerator from './Pages/ResumeGenerator';
 import AboutUs from './Pages/AboutUs';
+import PremiumPage from './Pages/PremiumPage';
+import AtsAnalyzer from './Pages/AtsAnalyzer'
+
+// ✅ Correct import
+import ProtectedPremium from './Pages/ProtectedPremium';
+
+// ✅ Import ResumeTools
+import ResumeTools from "./Pages/ResumeTools";
+import ResumeCreator from './Pages/ResumeCreator';
 
 function App() {
   const theme = createTheme({
     colors: {
       "mine-shaft": [
-        "#f6f6f6", // 0 → 50
-        "#e7e7e7", // 1 → 100
-        "#d1d1d1", // 2 → 200
-        "#b0b0b0", // 3 → 300
-        "#888888", // 4 → 400
-        "#6d6d6d", // 5 → 500
-        "#5d5d5d", // 6 → 600
-        "#4f4f4f", // 7 → 700
-        "#454545", // 8 → 800
-        "#3d3d3d", // 9 → 900
+        "#f6f6f6",
+        "#e7e7e7",
+        "#d1d1d1",
+        "#b0b0b0",
+        "#888888",
+        "#6d6d6d",
+        "#5d5d5d",
+        "#4f4f4f",
+        "#454545",
+        "#3d3d3d",
       ],
-
       "bright-sun": [
-        "#fffbeb", // 0 → 50
-        "#fff3c6", // 1 → 100
-        "#ffe588", // 2 → 200
-        "#ffd149", // 3 → 300
-        "#ffbd20", // 4 → 400
-        "#f99b07", // 5 → 500
-        "#dd7302", // 6 → 600
-        "#b75006", // 7 → 700
-        "#943c0c", // 8 → 800
-        "#7a330d", // 9 → 900
+        "#fffbeb",
+        "#fff3c6",
+        "#ffe588",
+        "#ffd149",
+        "#ffbd20",
+        "#f99b07",
+        "#dd7302",
+        "#b75006",
+        "#943c0c",
+        "#7a330d",
       ],
     },
-    fontFamily: "poppins,sens-serif"
-
+    fontFamily: "poppins, sans-serif",
   });
 
-
   return (
-    <MantineProvider defaultColorScheme='dark' theme={theme}>
+    <MantineProvider defaultColorScheme="dark" theme={theme}>
       <BrowserRouter>
         <Header />
         <VoiceAgent />
+
         <Routes>
           <Route path="/find-jobs" element={<Findjobs />} />
           <Route path="/find-jobs/:id" element={<Applyjob />} />
-          <Route path='/find-talent' element={<FindTalent />} />
-          <Route path='/find-talent/user/:id' element={<AdminUserProfile />} />
-          <Route path='/resume-generator' element={<ResumeGenerator />}/>
-          <Route path='/login' element={<LoginPage />} />
-          <Route path='/signup' element={<SignupPage />} />
+          <Route path="/find-talent" element={<FindTalent />} />
+          <Route path="/find-talent/user/:id" element={<AdminUserProfile />} />
+          <Route path="/ai-resume-builder" element={<ResumeCreator />} />
+          <Route path="/premium-templates" element={<PremiumTemplates />} />
+          <Route path="/ats-score" element={<AtsAnalyzer />} />
+          <Route path="/pdf-export" element={<PdfExport />} />
+          <Route path="/resume-generator" element={<ResumeGenerator />} />
+          <Route path="/resume-tools" element={ 
+            <ProtectedPremium>
+              <ResumeTools />
+            </ProtectedPremium>
+          } />
+
+
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+
+          <Route path="/premium" element={<PremiumPage />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           <Route
@@ -88,17 +109,19 @@ function App() {
               <ProtectedAdminRoute>
                 <AdminApplications />
               </ProtectedAdminRoute>
-            }/>
-        
+            }
+          />
 
-          <Route path='about' element={<AboutUs />}/>
+          <Route path="/about" element={<AboutUs />} />
+
+          {/* Default Route → Homepage */}
           <Route path="*" element={<Homepage />} />
         </Routes>
+
         <Footer />
       </BrowserRouter>
-
     </MantineProvider>
-  )
+  );
 }
 
 export default App;

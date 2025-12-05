@@ -12,7 +12,7 @@ const api = axios.create({
   baseURL: BASE_URL,
 });
 
-const api2 = axios.create({
+const api2 = axios.create({ 
   baseURL: BASE_URL2,
 });
 
