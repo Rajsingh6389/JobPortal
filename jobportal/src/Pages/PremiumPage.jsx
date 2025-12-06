@@ -1,48 +1,67 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { createOrderApi, verifyPaymentApi } from "../api/paymentApi";
 import { fetchProfile } from "../redux/authSlice";
 import { IconFileText, IconSettings, IconStars, IconUpload } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
+import { checkPaid } from "../api/api";
 
 function PremiumPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((s) => s.auth.user);
 
+  const reduxUser = useSelector((s) => s.auth.user);
+
+  const [localUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  });
+
+  const user = reduxUser || localUser;
+  const userId = user?.id;
+
+  const [paid, setPaid] = useState(false);
+  const [loadingPaid, setLoadingPaid] = useState(true);
+
+  // Fetch latest profile
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
 
-  const premiumTools = [
-    {
-      title: "AI Resume Builder",
-      desc: "Create ATS-friendly resumes instantly using AI.",
-      icon: IconStars,
-      path: "/ai-resume-builder"
-    },
-    {
-      title: "Premium Templates",
-      desc: "Select from 10+ beautifully designed resume templates.",
-      icon: IconFileText,
-      path: "/premium-templates"
-    },
-    {
-      title: "ATS Score Analyzer",
-      desc: "Improve your resume visibility with ATS analysis.",
-      icon: IconSettings,
-      path: "/ats-score"
-    },
-    {
-      title: "HD PDF Export",
-      desc: "Download polished, high-quality resume PDFs.",
-      icon: IconUpload,
-      path: "/pdf-export"
-    },
-  ];
+  // Check payment status
+  useEffect(() => {
+    let mounted = true;
+    async function loadPaid() {
+      if (!userId) {
+        setPaid(false);
+        setLoadingPaid(false);
+        return;
+      }
 
-  const startPayment = async () => {
+      try {
+        setLoadingPaid(true);
+        const isPaid = await checkPaid(userId);
+        if (mounted) setPaid(!!isPaid);
+      } catch {
+        if (mounted) setPaid(false);
+      } finally {
+        if (mounted) setLoadingPaid(false);
+      }
+    }
+    loadPaid();
+    return () => (mounted = false);
+  }, [userId]);
+
+  // Payment logic
+  const startPayment = useCallback(async () => {
     if (!user) return alert("Please login first.");
+
+    if (!window.Razorpay) {
+      return alert("Razorpay SDK not loaded.");
+    }
 
     try {
       const res = await createOrderApi(user.id, 99);
@@ -67,33 +86,72 @@ function PremiumPage() {
           };
 
           const verifyRes = await verifyPaymentApi(payload);
+
           if (verifyRes.data.success) {
-            alert("Premium Activated Successfully!");
+            alert("Premium Activated!");
             dispatch(fetchProfile());
-          } else alert("Payment verification failed!");
+
+            const isPaid = await checkPaid(user.id).catch(() => false);
+            setPaid(!!isPaid);
+          } else {
+            alert("Payment verification failed!");
+          }
         },
       };
 
       new window.Razorpay(options).open();
     } catch (err) {
       console.error(err);
-      alert("Something went wrong!");
+      alert("Something went wrong during payment.");
     }
-  };
+  }, [user, dispatch]);
+
+  const isPremium = user?.isPremium || paid;
+
+  const premiumTools = [
+    {
+      title: "AI Resume Builder",
+      desc: "Create ATS-friendly resumes instantly using AI.",
+      icon: IconStars,
+      path: "/ai-resume-builder",
+    },
+    {
+      title: "Premium Templates",
+      desc: "Select from 10+ beautifully designed resume templates.",
+      icon: IconFileText,
+      path: "/premium-templates",
+    },
+    {
+      title: "ATS Score Analyzer",
+      desc: "Improve your resume visibility with ATS analysis.",
+      icon: IconSettings,
+      path: "/ats-score",
+    },
+    {
+      title: "HD PDF Export",
+      desc: "Download polished, high-quality resume PDFs.",
+      icon: IconUpload,
+      path: "/pdf-export",
+    },
+  ];
 
   return (
     <div className="text-white px-5 sm:px-10 py-10 max-w-7xl mx-auto">
-      
+
       <div className="text-center mb-12 space-y-3">
         <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-yellow-300 to-yellow-500 bg-clip-text text-transparent">
-          {user?.isPremium ? "🎉 Premium Tools Unlocked!" : "Get Premium – ₹99 Only"}
+          {isPremium ? "🎉 Premium Tools Unlocked!" : "Get Premium – ₹99 Only"}
         </h1>
 
         <p className="text-gray-300 text-base sm:text-lg">
-          {user?.isPremium
+          {isPremium
             ? "Enjoy lifetime access to all AI-powered resume tools."
             : "Unlock AI resume builder, templates, ATS scoring, and more."}
         </p>
+
+        {!isPremium && loadingPaid && (
+          <p className="text-yellow-400 text-sm mt-2">Checking premium status...</p>
+        )}
       </div>
 
       {/* GRID */}
@@ -113,39 +171,31 @@ function PremiumPage() {
               hover:shadow-[0_15px_45px_rgba(255,215,0,0.25)]
             "
           >
-            {/* Glow */}
-            <div className="absolute inset-0 opacity-[0.12] bg-[radial-gradient(circle_at_center,white,transparent_60%)] pointer-events-none"></div>
-
-            {/* ICON */}
             <tool.icon className="text-yellow-400 z-10" size={45} />
 
-            {/* TEXT */}
             <div className="z-10">
               <h2 className="text-xl sm:text-2xl font-bold mt-4">{tool.title}</h2>
               <p className="text-gray-300 mt-2 text-sm sm:text-base">{tool.desc}</p>
             </div>
 
-            {/* BUTTON */}
             <button
-              onClick={() =>
-                user?.isPremium ? navigate(tool.path) : startPayment()
-              }
+              onClick={() => (isPremium ? navigate(tool.path) : startPayment())}
               className={`
                 mt-4 px-4 py-2 rounded-lg font-semibold transition z-10 w-full sm:w-auto
                 ${
-                  user?.isPremium
+                  isPremium
                     ? "bg-yellow-400 text-black hover:bg-yellow-300"
                     : "bg-gray-700 text-white hover:bg-gray-600"
                 }
               `}
             >
-              {user?.isPremium ? "Open Tool" : "Unlock Premium"}
+              {isPremium ? "Open Tool" : "Unlock Premium"}
             </button>
           </div>
         ))}
       </div>
 
-      {!user?.isPremium && (
+      {!isPremium && (
         <div className="text-center mt-12">
           <button
             onClick={startPayment}

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { IconCheck, IconAlertTriangle } from "@tabler/icons-react";
+import Comingsoon from './Comingsoon'
 
 function AtsAnalyzer() {
   const [resume, setResume] = useState("");
@@ -48,110 +49,112 @@ function AtsAnalyzer() {
   };
 
   return (
-    <div className="text-white p-6 sm:p-10 max-w-5xl mx-auto">
+    // <div className="text-white p-6 sm:p-10 max-w-5xl mx-auto">
 
-      {/* TITLE */}
-      <h1 className="text-3xl sm:text-4xl font-bold mb-6">ATS Score Analyzer</h1>
+    //   {/* TITLE */}
+    //   <h1 className="text-3xl sm:text-4xl font-bold mb-6">ATS Score Analyzer</h1>
 
-      {/* TEXT INPUTS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    //   {/* TEXT INPUTS */}
+    //   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
-        {/* Resume Box */}
-        <textarea
-          className="w-full h-52 p-4 bg-black/40 rounded-xl border border-white/20 outline-none"
-          placeholder="Paste your Resume text here..."
-          value={resume}
-          onChange={(e) => setResume(e.target.value)}
-        />
+    //     {/* Resume Box */}
+    //     <textarea
+    //       className="w-full h-52 p-4 bg-black/40 rounded-xl border border-white/20 outline-none"
+    //       placeholder="Paste your Resume text here..."
+    //       value={resume}
+    //       onChange={(e) => setResume(e.target.value)}
+    //     />
 
-        {/* Job Description Box */}
-        <textarea
-          className="w-full h-52 p-4 bg-black/40 rounded-xl border border-white/20 outline-none"
-          placeholder="Paste Job Description here..."
-          value={jd}
-          onChange={(e) => setJd(e.target.value)}
-        />
+    //     {/* Job Description Box */}
+    //     <textarea
+    //       className="w-full h-52 p-4 bg-black/40 rounded-xl border border-white/20 outline-none"
+    //       placeholder="Paste Job Description here..."
+    //       value={jd}
+    //       onChange={(e) => setJd(e.target.value)}
+    //     />
 
-      </div>
+    //   </div>
 
-      {/* ANALYZE BUTTON */}
-      <button
-        onClick={analyzeATS}
-        className="
-          px-8 py-3 bg-yellow-400 text-black font-bold 
-          rounded-xl hover:bg-yellow-300 transition
-        "
-      >
-        Analyze ATS Score
-      </button>
+    //   {/* ANALYZE BUTTON */}
+    //   <button
+    //     onClick={analyzeATS}
+    //     className="
+    //       px-8 py-3 bg-yellow-400 text-black font-bold 
+    //       rounded-xl hover:bg-yellow-300 transition
+    //     "
+    //   >
+    //     Analyze ATS Score
+    //   </button>
 
-      {/* RESULTS */}
-      {score !== null && (
-        <div className="mt-10 p-6 bg-white/5 rounded-2xl border border-white/20 backdrop-blur-lg">
+    //   {/* RESULTS */}
+    //   {score !== null && (
+    //     <div className="mt-10 p-6 bg-white/5 rounded-2xl border border-white/20 backdrop-blur-lg">
 
-          {/* SCORE */}
-          <h2 className="text-2xl font-bold mb-3">ATS Score</h2>
-          <p
-            className={`
-              text-5xl font-extrabold 
-              ${score >= 85 ? "text-green-400" : "text-yellow-400"}
-            `}
-          >
-            {score}%
-          </p>
+    //       {/* SCORE */}
+    //       <h2 className="text-2xl font-bold mb-3">ATS Score</h2>
+    //       <p
+    //         className={`
+    //           text-5xl font-extrabold 
+    //           ${score >= 85 ? "text-green-400" : "text-yellow-400"}
+    //         `}
+    //       >
+    //         {score}%
+    //       </p>
 
-          <p className="text-gray-300 mt-1">
-            {score >= 85
-              ? "Great! Your resume is highly compatible with this job."
-              : "Needs improvement. Add missing skills to boost your score."}
-          </p>
+    //       <p className="text-gray-300 mt-1">
+    //         {score >= 85
+    //           ? "Great! Your resume is highly compatible with this job."
+    //           : "Needs improvement. Add missing skills to boost your score."}
+    //       </p>
 
-          {/* MATCHED SKILLS */}
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold text-green-400 mb-2 flex items-center gap-2">
-              <IconCheck size={22} /> Matched Skills ({matchedSkills.length})
-            </h3>
+    //       {/* MATCHED SKILLS */}
+    //       <div className="mt-8">
+    //         <h3 className="text-xl font-semibold text-green-400 mb-2 flex items-center gap-2">
+    //           <IconCheck size={22} /> Matched Skills ({matchedSkills.length})
+    //         </h3>
 
-            <div className="flex flex-wrap gap-2">
-              {matchedSkills.map((skill, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-green-600/30 border border-green-400 rounded-full text-sm"
-                >
-                  {skill}
-                </span>
-              ))}
+    //         <div className="flex flex-wrap gap-2">
+    //           {matchedSkills.map((skill, i) => (
+    //             <span
+    //               key={i}
+    //               className="px-3 py-1 bg-green-600/30 border border-green-400 rounded-full text-sm"
+    //             >
+    //               {skill}
+    //             </span>
+    //           ))}
 
-              {matchedSkills.length === 0 && (
-                <p className="text-gray-400">No relevant skills matched.</p>
-              )}
-            </div>
-          </div>
+    //           {matchedSkills.length === 0 && (
+    //             <p className="text-gray-400">No relevant skills matched.</p>
+    //           )}
+    //         </div>
+    //       </div>
 
-          {/* MISSING SKILLS */}
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold text-red-400 mb-2 flex items-center gap-2">
-              <IconAlertTriangle size={22} /> Missing Skills ({missingSkills.length})
-            </h3>
+    //       {/* MISSING SKILLS */}
+    //       <div className="mt-8">
+    //         <h3 className="text-xl font-semibold text-red-400 mb-2 flex items-center gap-2">
+    //           <IconAlertTriangle size={22} /> Missing Skills ({missingSkills.length})
+    //         </h3>
 
-            <div className="flex flex-wrap gap-2">
-              {missingSkills.map((skill, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-red-600/30 border border-red-400 rounded-full text-sm"
-                >
-                  {skill}
-                </span>
-              ))}
+    //         <div className="flex flex-wrap gap-2">
+    //           {missingSkills.map((skill, i) => (
+    //             <span
+    //               key={i}
+    //               className="px-3 py-1 bg-red-600/30 border border-red-400 rounded-full text-sm"
+    //             >
+    //               {skill}
+    //             </span>
+    //           ))}
 
-              {missingSkills.length === 0 && (
-                <p className="text-gray-400">No missing skills 🎉</p>
-              )}
-            </div>
-          </div>
+    //           {missingSkills.length === 0 && (
+    //             <p className="text-gray-400">No missing skills 🎉</p>
+    //           )}
+    //         </div>
+    //       </div>
 
-        </div>
-      )}
+    //     </div>
+    //   )}
+    <div>
+      <Comingsoon />
     </div>
   );
 }
