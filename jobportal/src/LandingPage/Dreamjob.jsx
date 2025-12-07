@@ -67,7 +67,7 @@ export default function Dreamjob() {
 
     try {
       // 1️⃣ Create order (backend)
-      const { data: order } = await createOrderApi(activeUser.id, 99);
+      const { data: order } = await createOrderApi(activeUser.id, 29);
 
       console.log("📩 Raw Cashfree Response:", order.cashfreeResponse);
 
@@ -210,7 +210,7 @@ export default function Dreamjob() {
             Unlock all resume tools, templates, and AI features.
           </p>
 
-          <div className="text-bright-sun-400 text-4xl sm:text-5xl font-bold">₹99</div>
+          <div className="text-bright-sun-400 text-4xl sm:text-5xl font-bold">₹29</div>
           <p className="text-mine-shaft-400 text-sm sm:text-base">
             One-time payment — lifetime access
           </p>
