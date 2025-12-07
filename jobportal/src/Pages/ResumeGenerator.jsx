@@ -3,11 +3,11 @@ import {
   generateResume,
   checkPaid,
   downloadPdf,
-  createRazorpayOrder,
-  verifyRazorpayPayment,
+  createCashfreeOrder,
+  verifyCashfreePayment,
 } from "../api/api";
 import ResumeLoader from "./ResumeLoader";
-import PaymentModal from "./PaymentModal"
+import PaymentModal from "./PaymentModal";
 
 export default function ResumeGenerator() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -24,6 +24,7 @@ export default function ResumeGenerator() {
   const [payLoading, setPayLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Check user's paid status
   useEffect(() => {
     if (userId) {
       checkPaid(userId).then(setPaid).catch(() => setPaid(false));
@@ -83,62 +84,60 @@ export default function ResumeGenerator() {
   }
 
   /* ---------------------------------
-        RAZORPAY PAYMENT HANDLER
+        CASHFREE PAYMENT HANDLER
   ----------------------------------*/
   async function handlePay() {
     setPayLoading(true);
+
     try {
-      const res = await createRazorpayOrder({ userId, amount: 99 });
-      const { orderId, amount, currency, keyId } = res.data;
+      // 1) Create order from backend
+      const res = await createCashfreeOrder({ userId, amount: 99 });
 
-      // Load Razorpay script
-      await new Promise((resolve, reject) => {
-        if (document.getElementById("rzp-script")) return resolve();
-        const script = document.createElement("script");
-        script.id = "rzp-script";
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.onload = resolve;
-        script.onerror = reject;
-        document.body.appendChild(script);
-      });
+      // Cashfree order response contains JSON string → parse it
+      const cf = JSON.parse(res.data.cashfreeResponse);
 
-      const options = {
-        key: keyId,
-        amount,
-        currency,
-        name: "Resume Generator Premium",
-        description: "Unlock Resume PDF Download",
-        order_id: orderId,
-        prefill: {
-          name: user?.name,
-          email: user?.email,
-        },
-        theme: { color: "#F7C948" },
-        handler: async function (response) {
-          const verify = await verifyRazorpayPayment({
-            userId,
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-          });
+      if (!cf.payment_link) {
+        setError("❌ Payment link not generated.");
+        setPayLoading(false);
+        return;
+      }
 
-          if (verify.data.success) {
-            setPaid(true);
-            setModalOpen(false);
-            onDownload();
-          } else {
-            setError("❌ Payment verification failed.");
-          }
-        },
-      };
+      // 2) Redirect to Cashfree checkout
+      window.location.href = cf.payment_link;
 
-      new window.Razorpay(options).open();
-    } catch {
+    } catch (err) {
+      console.error("Cashfree order error:", err);
       setError("❌ Payment failed.");
     } finally {
       setPayLoading(false);
     }
   }
+
+  /* ---------------------------------
+        CASHFREE PAYMENT VERIFY (AFTER REDIRECT)
+  ----------------------------------*/
+  useEffect(() => {
+    const orderId = new URLSearchParams(window.location.search).get("order_id");
+    if (!orderId || !userId) return;
+
+    async function verify() {
+      try {
+        const res = await verifyCashfreePayment({ userId, orderId });
+
+        if (res.data.success) {
+          setPaid(true);
+          setModalOpen(false);
+
+          // Automatically trigger download after payment success
+          if (resumeId) onDownload();
+        }
+      } catch (err) {
+        console.error("Payment verification failed:", err);
+      }
+    }
+
+    verify();
+  }, [userId, resumeId]);
 
   /* ---------------------------------
         LOADING SCREEN

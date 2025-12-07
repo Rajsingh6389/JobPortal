@@ -53,13 +53,13 @@ export async function getResumes(userId) {
 // =========================
 
 // Create Razorpay Order
-export async function createRazorpayOrder(data) {
+export async function createCashfreeOrder(data) {
   const res = await resumeapi.post("/payment/create-order", data);
   return res;
 }
 
 // Verify Razorpay Payment
-export async function verifyRazorpayPayment(payload) {
+export async function verifyCashfreePayment(payload) {
   const res = await resumeapi.post("/payment/verify", payload);
   return res;
 }

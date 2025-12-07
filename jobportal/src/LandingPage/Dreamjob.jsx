@@ -10,9 +10,8 @@ export default function Dreamjob() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Prefer user from Redux; fallback to localStorage
   const reduxUser = useSelector((state) => state.auth.user);
-  const [localUser, setLocalUser] = useState(() => {
+  const [localUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("user"));
     } catch {
@@ -26,122 +25,132 @@ export default function Dreamjob() {
   const [paid, setPaid] = useState(false);
   const [loadingPaid, setLoadingPaid] = useState(true);
 
-  // Fetch latest profile from DB on mount (and whenever userId changes)
+  // Fetch user profile on mount
   useEffect(() => {
     dispatch(fetchProfile());
   }, [dispatch]);
 
-  // Check paid status once userId is available
+  // Check payment status
   useEffect(() => {
-    let mounted = true;
-    async function fetchPaid() {
-      if (!userId) {
-        setPaid(false);
-        setLoadingPaid(false);
-        return;
-      }
-      setLoadingPaid(true);
+    if (!userId) {
+      setPaid(false);
+      setLoadingPaid(false);
+      return;
+    }
+
+    let active = true;
+
+    (async () => {
       try {
         const isPaid = await checkPaid(userId);
-        if (mounted) setPaid(Boolean(isPaid));
-      } catch (err) {
-        console.error("Error checking paid status:", err);
-        if (mounted) setPaid(false);
+        if (active) setPaid(Boolean(isPaid));
+      } catch {
+        if (active) setPaid(false);
       } finally {
-        if (mounted) setLoadingPaid(false);
+        if (active) setLoadingPaid(false);
       }
-    }
-    fetchPaid();
-    return () => { mounted = false; };
+    })();
+
+    return () => (active = false);
   }, [userId]);
 
-  // Payment starter
+  // ======================================================
+  // 🚀 START PAYMENT — CASHFREE V3 SDK (100% FIXED)
+  // ======================================================
   const startPayment = useCallback(async () => {
     const activeUser = reduxUser || localUser;
+
     if (!activeUser) {
       navigate("/login");
       return;
     }
 
-    if (!window.Razorpay) {
-      alert("Razorpay SDK not found. Make sure you added the Razorpay script to index.html.");
-      return;
-    }
-
     try {
-      // 1) Create order on backend
+      // 1️⃣ Create order (backend)
       const { data: order } = await createOrderApi(activeUser.id, 99);
 
-      const options = {
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: "Premium Resume Tools",
-        description: "Unlock full features",
-        order_id: order.orderId,
-        handler: async function (response) {
-          try {
-            const verifyData = {
-              userId: activeUser.id,
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            };
+      console.log("📩 Raw Cashfree Response:", order.cashfreeResponse);
 
-            const verifyRes = await verifyPaymentApi(verifyData);
+      const cfRes = JSON.parse(order.cashfreeResponse);
 
-            if (verifyRes?.data?.success) {
-              alert("🎉 Payment Successful! Premium Unlocked.");
-              // Update backend state & redux profile
-              dispatch(fetchProfile());
-              // Re-check paid state
-              const isPaid = await checkPaid(activeUser.id).catch(() => false);
-              setPaid(Boolean(isPaid));
-            } else {
-              alert("Payment verification failed!");
-            }
-          } catch (err) {
-            console.error("Error verifying payment:", err);
-            alert("Error verifying payment. Check console.");
-          }
-        },
-        theme: { color: "#ffbd20" },
-      };
+      if (!cfRes.payment_session_id) {
+        alert("No payment session returned.");
+        return;
+      }
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      // 2️⃣ Ensure Cashfree SDK loaded
+      if (!window.Cashfree) {
+        console.error("Cashfree SDK NOT found in window.");
+        alert("Cashfree SDK failed to load.");
+        return;
+      }
+
+      // 3️⃣ Initialize Cashfree instance
+      const cf = window.Cashfree({ mode: "production" });
+
+      // 4️⃣ START CHECKOUT
+      cf.checkout({
+        paymentSessionId: cfRes.payment_session_id,
+        redirectTarget: "_self"
+      });
+
     } catch (err) {
-      console.error("Payment initialization failed:", err);
-      alert("Payment initialization failed.");
+      console.error("Payment start failed:", err);
+      alert("Payment failed.");
     }
-  }, [reduxUser, localUser, navigate, dispatch]);
+  }, [reduxUser, localUser, navigate]);
 
+  // ======================================================
+  // 🔄 VERIFY PAYMENT AFTER REDIRECT
+  // ======================================================
+  useEffect(() => {
+    const orderId = new URLSearchParams(window.location.search).get("order_id");
+    if (!orderId || !userId) return;
+
+    (async () => {
+      try {
+        const res = await verifyPaymentApi({ userId, orderId });
+
+        if (res.data.success) {
+          alert("🎉 Payment Successful!");
+
+          dispatch(fetchProfile());
+
+          const isPaid = await checkPaid(userId).catch(() => false);
+          setPaid(Boolean(isPaid));
+        }
+      } catch (err) {
+        console.error("Payment verification error:", err);
+      }
+    })();
+  }, [userId, dispatch]);
+
+  // ======================================================
+  // BUTTON HANDLERS
+  // ======================================================
   const goOrPay = () => {
-    // prefer server-side premium flag if present, otherwise use paid state
-    const isPremium = user?.isPremium || paid;
-    if (isPremium) {
-      navigate("/resume-tools");
-    } else {
-      startPayment();
-    }
-  };
-
-  const premiumBtnHandler = () => {
-    const isPremium = user?.isPremium || paid;
-    if (isPremium) navigate("/premium");
+    if (user?.isPremium || paid) navigate("/resume-tools");
     else startPayment();
   };
 
+  const premiumBtnHandler = () => {
+    if (user?.isPremium || paid) navigate("/premium");
+    else startPayment();
+  };
+
+  // ======================================================
+  // UI SECTION
+  // ======================================================
   return (
     <section
       className="
-        px-6 sm:px-10 md:px-16 lg:px-20 
-        py-16 lg:py-24 
-        flex flex-col lg:flex-row 
+        px-6 sm:px-10 md:px-16 lg:px-20
+        py-16 lg:py-24
+        flex flex-col lg:flex-row
         justify-between items-center gap-12 lg:gap-20
       "
     >
-      {/* LEFT SIDE */}
+      {/* LEFT SECTION */}
       <div className="w-full lg:w-1/2 space-y-6">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
           Unlock <span className="text-bright-sun-400">Premium</span> Resume Tools
@@ -165,61 +174,46 @@ export default function Dreamjob() {
           ))}
         </div>
 
-        {/* Upload Resume Button */}
         <button
           onClick={goOrPay}
           className="
-            mt-6 bg-bright-sun-400 hover:bg-bright-sun-300 
-            text-black font-semibold px-6 py-3 rounded-xl 
+            mt-6 bg-bright-sun-400 hover:bg-bright-sun-300
+            text-black font-semibold px-6 py-3 rounded-xl
             flex items-center gap-2 w-fit active:scale-95 transition
           "
         >
           <IconUpload size={22} />
-          {(user?.isPremium || paid) ? "Go To Premium Tools" : (loadingPaid ? "Checking..." : "Upload Resume")}
+          {(user?.isPremium || paid)
+            ? "Go To Premium Tools"
+            : (loadingPaid ? "Checking..." : "Upload Resume")}
         </button>
-
       </div>
 
-      {/* RIGHT SIDE — PREMIUM CARD */}
+      {/* RIGHT SECTION */}
       <div
         className="
           relative group overflow-hidden
-          w-full lg:w-1/2 
+          w-full lg:w-1/2
           bg-white/5 backdrop-blur-xl
-          border border-white/15 rounded-2xl 
-          p-6 sm:p-8 
+          border border-white/15 rounded-2xl
+          p-6 sm:p-8
           shadow-[0_4px_20px_rgba(0,0,0,0.4)]
           transition-all duration-500
           hover:shadow-[0_6px_35px_rgba(255,215,0,0.2)]
           hover:scale-[1.02]
         "
       >
-        <div
-          className="
-            absolute inset-0 opacity-[0.12]
-            bg-[radial-gradient(circle_at_center,white,transparent_55%)]
-            animate-glassGlow pointer-events-none
-          "
-        ></div>
-
-        <div
-          className="
-            absolute inset-0 h-full w-full 
-            bg-gradient-to-r from-transparent via-white/10 to-transparent
-            translate-x-[-150%] 
-            group-hover:translate-x-[150%] 
-            transition-all duration-[1300ms] ease-out
-          "
-        ></div>
-
         <div className="relative z-10 space-y-6">
           <h2 className="text-2xl sm:text-3xl font-semibold text-white">Premium Plan</h2>
+
           <p className="text-mine-shaft-300 text-sm sm:text-base">
             Unlock all resume tools, templates, and AI features.
           </p>
 
           <div className="text-bright-sun-400 text-4xl sm:text-5xl font-bold">₹99</div>
-          <p className="text-mine-shaft-400 text-sm sm:text-base">One-time payment — lifetime access</p>
+          <p className="text-mine-shaft-400 text-sm sm:text-base">
+            One-time payment — lifetime access
+          </p>
 
           <hr className="border-white/20" />
 
@@ -236,16 +230,17 @@ export default function Dreamjob() {
             ))}
           </div>
 
-          {/* PREMIUM BUTTON */}
           <button
             onClick={premiumBtnHandler}
             className="
-              mt-4 bg-bright-sun-400 text-black text-base sm:text-lg font-semibold 
-              p-3 rounded-xl hover:bg-bright-sun-300 
+              mt-4 bg-bright-sun-400 text-black text-base sm:text-lg font-semibold
+              p-3 rounded-xl hover:bg-bright-sun-300
               transition active:scale-95 w-full sm:w-auto
             "
           >
-            {(user?.isPremium || paid) ? "Go To Premium Tools" : (loadingPaid ? "Checking..." : "Get Premium for ₹99")}
+            {(user?.isPremium || paid)
+              ? "Go To Premium Tools"
+              : (loadingPaid ? "Checking..." : "Get Premium for ₹99")}
           </button>
         </div>
       </div>
