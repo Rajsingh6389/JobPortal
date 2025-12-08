@@ -70,11 +70,11 @@ function VoiceAgent() {
   };
 
   /* =========================================================
-        AI CHAT REQUEST (FOR QUESTIONS)
+        AI CHAT REQUEST
   ========================================================= */
   const askAI = async (question) => {
     try {
-      setTranscript((prev) => prev + "\nAI: ...thinking...");
+      setTranscript("AI: ...thinking...");
 
       const response = await fetch(AI_ENDPOINT, {
         method: "POST",
@@ -85,19 +85,18 @@ function VoiceAgent() {
       const data = await response.json();
       const reply = data.reply || "Sorry, I am not sure about that.";
 
-      setTranscript((prev) =>
-        prev.replace("AI: ...thinking...", "AI: " + reply)
-      );
-
+      setTranscript("AI: " + reply);
       speak(reply);
+
     } catch (err) {
       speak("I am unable to reach the server right now.");
       console.error(err);
+      setTranscript("AI: Server error, please try again.");
     }
   };
 
   /* =========================================================
-         INITIALIZE VOICE ENGINE
+         INITIALIZE ENGINE
   ========================================================= */
   useEffect(() => {
     if (!SpeechRecognition) {
@@ -117,25 +116,28 @@ function VoiceAgent() {
     recog.onresult = (event) => {
       const spoken = event.results[0][0].transcript;
 
-      setTranscript((prev) => "You: " + spoken + "\n" + prev);
+      // ⭐ show only latest text
+      setTranscript("You: " + spoken);
 
       const route = matchCommand(spoken);
 
-      // ⭐ SPECIAL FIXED ANSWER: "Who created this website?"
+      // ⭐ FIXED ANSWER
       if (route === "CREATOR") {
         const reply = "This website was created by Raj.";
-        setTranscript((prev) => "AI: " + reply + "\n" + prev);
+        setTranscript("AI: " + reply);
         speak(reply);
         return;
       }
 
-      // ⭐ Normal navigation
+      // ⭐ Navigation
       if (route && route !== "CREATOR") {
         speak("Opening " + route.replace("/", "").replace("-", " "));
         setTimeout(() => navigate(route), 600);
-      } else {
-        askAI(spoken); // Fallback: Ask backend AI
+        return;
       }
+
+      // ⭐ Ask AI backend
+      askAI(spoken);
     };
 
     recog.onerror = () => {
@@ -167,7 +169,7 @@ function VoiceAgent() {
   ========================================================= */
   return (
     <>
-      {/* 🎤 Floating Mic Button */}
+      {/* 🎤 Mic Button */}
       <button
         onClick={startListening}
         className={`fixed bottom-8 right-8 z-[9999] w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-xl transition-all duration-300 border border-white/20
@@ -176,16 +178,16 @@ function VoiceAgent() {
         🎤
       </button>
 
-      {/* Listening Prompt */}
+      {/* Listening Popup */}
       {promptVisible && (
         <div className="fixed bottom-28 right-10 bg-black/70 backdrop-blur-xl px-5 py-3 rounded-xl text-white text-sm shadow-xl animate-fadeIn z-[9999]">
           Listening…
         </div>
       )}
 
-      {/* Transcript Chat Window */}
+      {/* Transcript Window */}
       {transcript && (
-        <div className="fixed bottom-24 right-28 max-w-xs max-h-48 overflow-y-auto 
+        <div className="fixed bottom-24 right-28 max-w-xs max-h-48
         bg-black/60 backdrop-blur-xl px-4 py-3 rounded-xl text-white 
         text-sm shadow-lg animate-fadeIn whitespace-pre-line">
           {transcript}
@@ -199,7 +201,7 @@ function VoiceAgent() {
         </div>
       )}
 
-      {/* Internal CSS */}
+      {/* CSS */}
       <style>{`
         .animate-pulse {
           animation: pulse 1.2s infinite;
