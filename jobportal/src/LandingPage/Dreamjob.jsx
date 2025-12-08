@@ -114,7 +114,7 @@ export default function Dreamjob() {
 
     (async () => {
       try {
-        console.log(userId);
+        console.log({userId,orderId});
         const res = await verifyPaymentApi({ userId, orderId });
 
         if (res.data.success) {
