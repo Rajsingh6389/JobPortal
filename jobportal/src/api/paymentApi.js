@@ -1,15 +1,35 @@
 import axios from "axios";
 
+// Backend Base URL (Railway)
 const BASE_URL2 = "https://jobportalserver-production-0346.up.railway.app/api";
 
 const api2 = axios.create({
   baseURL: BASE_URL2,
 });
 
-// ⭐ Create Cashfree Order
-export const createOrderApi = (userId, amount = 99) =>
+// -----------------------------------------------------
+// ⭐ CREATE CASHFREE ORDER
+// -----------------------------------------------------
+export const createOrderApi = (userId, amount = 29) =>
   api2.post("/payment/create-order", { userId, amount });
 
-// ⭐ Verify Cashfree Payment
+
+// -----------------------------------------------------
+// ⭐ VERIFY CASHFREE PAYMENT
+// -----------------------------------------------------
 export const verifyPaymentApi = (data) =>
   api2.post("/payment/verify", data);
+
+
+// -----------------------------------------------------
+// ⭐ CHECK PAID STATUS (used in Dreamjob.jsx)
+// -----------------------------------------------------
+export const checkPaid = async (userId) => {
+  try {
+    const res = await api2.get(`/users/${userId}`);
+    return res.data.paymentStatus === true;
+  } catch (err) {
+    console.error("checkPaid error:", err);
+    return false;
+  }
+};

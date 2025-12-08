@@ -19,6 +19,11 @@ function Navlinks({ mobile = false, onClickItem, loggedIn = false }) {
       { name: "Login", url: "/login" },
       { name: "Sign Up", url: "/signup" }
     );
+  }else{
+    links.push(
+      {name:"LogOut" ,url:"/login"},
+      {name:"Profile",url:"/profile"}
+    )
   }
 
   return (

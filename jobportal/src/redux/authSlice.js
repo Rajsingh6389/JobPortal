@@ -2,33 +2,39 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { loginApi, signupApi } from "../api/authApi";
 import { getProfileApi, updateProfileApi } from "../api/profileApi";
 
-// LOGIN
+/* ===========================
+    LOGIN
+=========================== */
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginApi(data);
-      return res.data;
+      return res.data; // token, userId, name, email, userType
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Login failed" });
     }
   }
 );
 
-// FETCH PROFILE (AFTER LOGIN OR REFRESH)
+/* ===========================
+    FETCH PROFILE (Correct place to load Premium)
+=========================== */
 export const fetchProfile = createAsyncThunk(
   "auth/fetchProfile",
   async (_, { rejectWithValue }) => {
     try {
       const res = await getProfileApi();
-      return res.data;
+      return res.data; // contains paymentStatus
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Failed to fetch profile" });
     }
   }
 );
 
-// UPDATE PROFILE
+/* ===========================
+    UPDATE PROFILE
+=========================== */
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
   async (data, { rejectWithValue }) => {
@@ -41,7 +47,9 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-// SIGNUP
+/* ===========================
+    SIGNUP
+=========================== */
 export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (data, { rejectWithValue }) => {
@@ -54,14 +62,15 @@ export const signupUser = createAsyncThunk(
   }
 );
 
-// AUTH SLICE
+/* ===========================
+    AUTH SLICE
+=========================== */
 const authSlice = createSlice({
   name: "auth",
 
   initialState: {
     user: JSON.parse(localStorage.getItem("user")) || null,
     token: localStorage.getItem("token") || null,
-    userType: localStorage.getItem("userType") || null,
     loggedIn: !!localStorage.getItem("token"),
     loading: false,
     error: "",
@@ -71,24 +80,24 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      state.userType = null;
       state.loggedIn = false;
       localStorage.clear();
     },
 
-    // 🔥 Only for instant UI update after payment success
+    // Instant premium update after payment success (optional)
     upgradeToPremium: (state) => {
       if (!state.user) return;
-      state.user.isPremium = true;
       state.user.paymentStatus = true;
+      state.user.isPremium = true;
       localStorage.setItem("user", JSON.stringify(state.user));
     },
   },
 
   extraReducers: (builder) => {
     builder
-
-      // LOGIN
+      /* -------------------------
+         LOGIN
+      --------------------------*/
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = "";
@@ -97,25 +106,22 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
 
-        // Basic login data
+        // initial login user object
         const userData = {
           id: action.payload.userId,
           name: action.payload.name,
           email: action.payload.email,
           userType: action.payload.userType,
+          paymentStatus: false, // will update on fetchProfile()
+          isPremium: false,
         };
-
-        // Premium status MUST come from DB profile (fetchProfile)
-        userData.isPremium = false;
 
         state.user = userData;
         state.token = action.payload.token;
-        state.userType = action.payload.userType;
         state.loggedIn = true;
 
-        localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("userType", action.payload.userType);
+        localStorage.setItem("user", JSON.stringify(userData));
       })
 
       .addCase(loginUser.rejected, (state, action) => {
@@ -123,45 +129,39 @@ const authSlice = createSlice({
         state.error = action.payload?.message || "Login failed";
       })
 
-      // SIGNUP
-      .addCase(signupUser.pending, (state) => {
-        state.loading = true;
-      })
-
+      /* -------------------------
+         SIGNUP
+      --------------------------*/
       .addCase(signupUser.fulfilled, (state) => {
         state.loading = false;
       })
 
-      .addCase(signupUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || "Signup failed";
-      })
-
-      // 🌟 FETCH PROFILE — ALWAYS SYNC PREMIUM STATUS
+      /* -------------------------
+         FETCH PROFILE → Premium Mapping
+      --------------------------*/
       .addCase(fetchProfile.fulfilled, (state, action) => {
-        state.user = action.payload;
+        const profile = action.payload;
 
-        // 🔥 IMPORTANT: Always map DB → Redux
-        state.user.isPremium = !!action.payload.paymentStatus;
+        // mapping backend → redux
+        profile.isPremium = !!profile.paymentStatus;
 
-        state.userType = action.payload.userType;
+        state.user = profile;
+        state.loggedIn = true;
 
-        localStorage.setItem("user", JSON.stringify(state.user));
-        localStorage.setItem("userType", state.userType);
+        localStorage.setItem("user", JSON.stringify(profile));
       })
 
-      // UPDATE PROFILE
+      /* -------------------------
+         UPDATE PROFILE
+      --------------------------*/
       .addCase(updateProfile.fulfilled, (state, action) => {
-        state.user = action.payload;
+        const profile = action.payload;
 
-        state.user.isPremium = !!action.payload.paymentStatus;
+        profile.isPremium = !!profile.paymentStatus;
 
-        if (action.payload.userType) {
-          state.userType = action.payload.userType;
-          localStorage.setItem("userType", action.payload.userType);
-        }
+        state.user = profile;
 
-        localStorage.setItem("user", JSON.stringify(state.user));
+        localStorage.setItem("user", JSON.stringify(profile));
       });
   },
 });

@@ -4,7 +4,7 @@ import { IconUpload, IconSettings, IconFileText, IconStars, IconCheck } from "@t
 import { useNavigate } from "react-router-dom";
 import { createOrderApi, verifyPaymentApi } from "../api/paymentApi";
 import { fetchProfile } from "../redux/authSlice";
-import { checkPaid } from "../api/api";
+import { checkPaid } from "../api/paymentApi";
 
 export default function Dreamjob() {
   const dispatch = useDispatch();
@@ -42,6 +42,8 @@ export default function Dreamjob() {
 
     (async () => {
       try {
+        console.log("userId : ", userId);
+        
         const isPaid = await checkPaid(userId);
         if (active) setPaid(Boolean(isPaid));
       } catch {
@@ -67,6 +69,9 @@ export default function Dreamjob() {
 
     try {
       // 1️⃣ Create order (backend)
+      console.log(activeUser);
+      console.log("userId : ", activeUser.id);
+
       const { data: order } = await createOrderApi(activeUser.id, 29);
 
       console.log("📩 Raw Cashfree Response:", order.cashfreeResponse);
@@ -109,6 +114,7 @@ export default function Dreamjob() {
 
     (async () => {
       try {
+        console.log(userId);
         const res = await verifyPaymentApi({ userId, orderId });
 
         if (res.data.success) {
@@ -129,7 +135,7 @@ export default function Dreamjob() {
   // BUTTON HANDLERS
   // ======================================================
   const goOrPay = () => {
-    if (user?.isPremium || paid) navigate("/resume-tools");
+    if (user?.isPremium || paid) navigate("/premium");
     else startPayment();
   };
 
@@ -240,7 +246,7 @@ export default function Dreamjob() {
           >
             {(user?.isPremium || paid)
               ? "Go To Premium Tools"
-              : (loadingPaid ? "Checking..." : "Get Premium for ₹99")}
+              : (loadingPaid ? "Checking..." : "Get Premium for ₹29")}
           </button>
         </div>
       </div>

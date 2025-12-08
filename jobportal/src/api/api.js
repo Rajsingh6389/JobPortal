@@ -23,13 +23,7 @@ export async function generateResume({ userId, prompt }) {
   return res.data;
 }
 
-// Check Payment Status
-export async function checkPaid(userId) {
-  const res = await resumeapi.get(`/resume/payment-status`, {
-    params: { userId },
-  });
-  return res.data.paid;
-}
+
 
 // Download PDF
 export async function downloadPdf(userId, resumeId) {
