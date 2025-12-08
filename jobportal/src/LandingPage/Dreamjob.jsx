@@ -72,7 +72,7 @@ export default function Dreamjob() {
       console.log(activeUser);
       console.log("userId : ", activeUser.id);
 
-      const { data: order } = await createOrderApi(activeUser.id, 29);
+      const { data: order } = await createOrderApi(activeUser.id, 1);
 
       console.log("📩 Raw Cashfree Response:", order.cashfreeResponse);
 
