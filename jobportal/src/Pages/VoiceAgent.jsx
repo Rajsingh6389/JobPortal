@@ -31,10 +31,22 @@ function VoiceAgent() {
     { keywords: ["ats score"], path: "/ats-score" },
     { keywords: ["resume tools"], path: "/resume-tools" },
     { keywords: ["home", "go home"], path: "/" },
+
+    // ⭐ Custom command to answer creator name
+    {
+      keywords: [
+        "who created this website",
+        "who made this website",
+        "website creator",
+        "who is the developer",
+        "who build this website"
+      ],
+      path: "CREATOR",
+    },
   ];
 
   /* =========================================================
-          TEXT-TO-SPEECH (AI Response Output)
+        TEXT-TO-SPEECH (AI Response Output)
   ========================================================= */
   const speak = (text) => {
     const utter = new SpeechSynthesisUtterance(text);
@@ -62,7 +74,6 @@ function VoiceAgent() {
   ========================================================= */
   const askAI = async (question) => {
     try {
-      // temporary “thinking”
       setTranscript((prev) => prev + "\nAI: ...thinking...");
 
       const response = await fetch(AI_ENDPOINT, {
@@ -74,7 +85,6 @@ function VoiceAgent() {
       const data = await response.json();
       const reply = data.reply || "Sorry, I am not sure about that.";
 
-      // replace thinking bubble
       setTranscript((prev) =>
         prev.replace("AI: ...thinking...", "AI: " + reply)
       );
@@ -107,16 +117,24 @@ function VoiceAgent() {
     recog.onresult = (event) => {
       const spoken = event.results[0][0].transcript;
 
-      // Chat history format
       setTranscript((prev) => "You: " + spoken + "\n" + prev);
 
       const route = matchCommand(spoken);
 
-      if (route) {
+      // ⭐ SPECIAL FIXED ANSWER: "Who created this website?"
+      if (route === "CREATOR") {
+        const reply = "This website was created by Raj.";
+        setTranscript((prev) => "AI: " + reply + "\n" + prev);
+        speak(reply);
+        return;
+      }
+
+      // ⭐ Normal navigation
+      if (route && route !== "CREATOR") {
         speak("Opening " + route.replace("/", "").replace("-", " "));
         setTimeout(() => navigate(route), 600);
       } else {
-        askAI(spoken); // ⭐ AI MODE IF NOT A COMMAND
+        askAI(spoken); // Fallback: Ask backend AI
       }
     };
 
