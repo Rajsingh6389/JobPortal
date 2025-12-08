@@ -4,8 +4,7 @@ import { createOrderApi, verifyPaymentApi } from "../api/paymentApi";
 import { fetchProfile } from "../redux/authSlice";
 import { IconFileText, IconSettings, IconStars, IconUpload } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
-import { checkPaid } from "../api/api";
-
+import { checkPaid } from "../api/paymentApi";
 function PremiumPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
   generateResume,
-  checkPaid,
   downloadPdf,
   createCashfreeOrder,
   verifyCashfreePayment,
 } from "../api/api";
 import ResumeLoader from "./ResumeLoader";
 import PaymentModal from "./PaymentModal";
+import { checkPaid } from "../api/paymentApi";
 
 export default function ResumeGenerator() {
   const user = JSON.parse(localStorage.getItem("user"));
