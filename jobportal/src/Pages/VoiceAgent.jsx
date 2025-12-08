@@ -62,6 +62,9 @@ function VoiceAgent() {
   ========================================================= */
   const askAI = async (question) => {
     try {
+      // temporary “thinking”
+      setTranscript((prev) => prev + "\nAI: ...thinking...");
+
       const response = await fetch(AI_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,9 +74,12 @@ function VoiceAgent() {
       const data = await response.json();
       const reply = data.reply || "Sorry, I am not sure about that.";
 
-      setTranscript("AI: " + reply);
-      speak(reply);
+      // replace thinking bubble
+      setTranscript((prev) =>
+        prev.replace("AI: ...thinking...", "AI: " + reply)
+      );
 
+      speak(reply);
     } catch (err) {
       speak("I am unable to reach the server right now.");
       console.error(err);
@@ -100,7 +106,9 @@ function VoiceAgent() {
 
     recog.onresult = (event) => {
       const spoken = event.results[0][0].transcript;
-      setTranscript("You: " + spoken);
+
+      // Chat history format
+      setTranscript((prev) => "You: " + spoken + "\n" + prev);
 
       const route = matchCommand(spoken);
 
@@ -129,7 +137,6 @@ function VoiceAgent() {
   const startListening = () => {
     if (!recognitionRef.current) return;
 
-    setTranscript("");
     setListening(true);
     setPromptVisible(true);
     speak("I'm listening.");
@@ -146,8 +153,7 @@ function VoiceAgent() {
       <button
         onClick={startListening}
         className={`fixed bottom-8 right-8 z-[9999] w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-xl transition-all duration-300 border border-white/20
-        ${listening ? "bg-red-500 animate-pulse" : "bg-yellow-400 hover:bg-yellow-300"}
-      `}
+        ${listening ? "bg-red-500 animate-pulse" : "bg-yellow-400 hover:bg-yellow-300"}`}
       >
         🎤
       </button>
@@ -159,9 +165,11 @@ function VoiceAgent() {
         </div>
       )}
 
-      {/* Transcript Display */}
+      {/* Transcript Chat Window */}
       {transcript && (
-        <div className="fixed bottom-24 right-28 bg-black/50 backdrop-blur-lg px-4 py-2 rounded-lg text-white text-sm shadow-lg animate-fadeIn">
+        <div className="fixed bottom-24 right-28 max-w-xs max-h-48 overflow-y-auto 
+        bg-black/60 backdrop-blur-xl px-4 py-3 rounded-xl text-white 
+        text-sm shadow-lg animate-fadeIn whitespace-pre-line">
           {transcript}
         </div>
       )}
