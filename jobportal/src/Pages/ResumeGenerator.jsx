@@ -1,17 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   generateResume,
-  downloadPdf,
-  createCashfreeOrder,
-  verifyCashfreePayment,
-} from "../api/api";
+  downloadPdf
+} from "../api/api"; // your existing APIs
+
+import {
+  createOrderApi,
+  verifyPaymentApi,
+  checkPaid
+} from "../api/paymentApi"; // CASHFREE APIs
+
 import ResumeLoader from "./ResumeLoader";
 import PaymentModal from "./PaymentModal";
-import { checkPaid } from "../api/paymentApi";
 
 export default function ResumeGenerator() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user?.id;
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const userId = storedUser?.id;
 
   const [prompt, setPrompt] = useState(
     "Java fresher with Spring Boot and React project experience."
@@ -19,21 +23,38 @@ export default function ResumeGenerator() {
   const [loading, setLoading] = useState(false);
   const [resumeText, setResumeText] = useState("");
   const [resumeId, setResumeId] = useState(null);
+
   const [paid, setPaid] = useState(false);
+  const [loadingPaid, setLoadingPaid] = useState(true);
+
   const [modalOpen, setModalOpen] = useState(false);
-  const [payLoading, setPayLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Check user's paid status
+  /* ---------------------------------------------------
+      1️⃣ Check Payment Status on Page Load
+  --------------------------------------------------- */
   useEffect(() => {
-    if (userId) {
-      checkPaid(userId).then(setPaid).catch(() => setPaid(false));
+    if (!userId) {
+      setPaid(false);
+      setLoadingPaid(false);
+      return;
     }
+
+    (async () => {
+      try {
+        const isPaid = await checkPaid(userId);
+        setPaid(Boolean(isPaid));
+      } catch {
+        setPaid(false);
+      } finally {
+        setLoadingPaid(false);
+      }
+    })();
   }, [userId]);
 
-  /* ---------------------------------
-        GENERATE RESUME
-  ----------------------------------*/
+  /* ---------------------------------------------------
+      2️⃣ Generate Resume
+  --------------------------------------------------- */
   async function onGenerate(e) {
     e.preventDefault();
 
@@ -55,9 +76,9 @@ export default function ResumeGenerator() {
     }
   }
 
-  /* ---------------------------------
-        PDF DOWNLOAD
-  ----------------------------------*/
+  /* ---------------------------------------------------
+      3️⃣ Download Resume (Premium Feature)
+  --------------------------------------------------- */
   async function onDownload() {
     if (!resumeId) return setError("Generate a resume first.");
 
@@ -77,71 +98,89 @@ export default function ResumeGenerator() {
       a.href = url;
       a.download = `resume-${resumeId}.pdf`;
       a.click();
+
       window.URL.revokeObjectURL(url);
     } catch {
       setError("❌ Download failed.");
     }
   }
 
-  /* ---------------------------------
-        CASHFREE PAYMENT HANDLER
-  ----------------------------------*/
-  async function handlePay() {
-    setPayLoading(true);
+  /* ---------------------------------------------------
+      4️⃣ Start Cashfree Payment (Same as Dreamjob)
+  --------------------------------------------------- */
+  const startPayment = useCallback(async () => {
+    if (!userId) {
+      alert("Please login first.");
+      return;
+    }
 
     try {
-      // 1) Create order from backend
-      const res = await createCashfreeOrder({ userId, amount: 99 });
+      // 1) Create order
+      const { data: order } = await createOrderApi(userId, 29);
 
-      // Cashfree order response contains JSON string → parse it
-      const cf = JSON.parse(res.data.cashfreeResponse);
+      console.log("📩 ResumeGenerator Cashfree Order:", order.cashfreeResponse);
 
-      if (!cf.payment_link) {
-        setError("❌ Payment link not generated.");
-        setPayLoading(false);
+      const cfRes = JSON.parse(order.cashfreeResponse);
+
+      if (!cfRes.payment_session_id) {
+        alert("Cashfree did not return payment_session_id");
         return;
       }
 
-      // 2) Redirect to Cashfree checkout
-      window.location.href = cf.payment_link;
+      // 2) Ensure SDK exists
+      if (!window.Cashfree) {
+        alert("Cashfree SDK not loaded");
+        return;
+      }
+
+      // 3) Initialize
+      const cf = window.Cashfree({ mode: "production" });
+
+      // 4) Start checkout
+      cf.checkout({
+        paymentSessionId: cfRes.payment_session_id,
+        redirectTarget: "_self",
+      });
 
     } catch (err) {
-      console.error("Cashfree order error:", err);
-      setError("❌ Payment failed.");
-    } finally {
-      setPayLoading(false);
+      console.error("Payment failed:", err);
+      alert("Payment failed");
     }
-  }
+  }, [userId]);
 
-  /* ---------------------------------
-        CASHFREE PAYMENT VERIFY (AFTER REDIRECT)
-  ----------------------------------*/
+  /* ---------------------------------------------------
+      5️⃣ VERIFY PAYMENT AFTER REDIRECT
+         (Same logic as Dreamjob)
+  --------------------------------------------------- */
   useEffect(() => {
     const orderId = new URLSearchParams(window.location.search).get("order_id");
+
     if (!orderId || !userId) return;
 
-    async function verify() {
+    (async () => {
       try {
-        const res = await verifyCashfreePayment({ userId, orderId });
+        console.log("Verifying Payment:", { userId, orderId });
+
+        const res = await verifyPaymentApi({ userId, orderId });
 
         if (res.data.success) {
+          alert("🎉 Payment Successful!");
+
+          // update UI
           setPaid(true);
           setModalOpen(false);
 
-          // Automatically trigger download after payment success
           if (resumeId) onDownload();
         }
       } catch (err) {
-        console.error("Payment verification failed:", err);
+        console.error("Payment verification error:", err);
       }
-    }
-
-    verify();
+    })();
   }, [userId, resumeId]);
 
-  /* ---------------------------------
-        LOADING SCREEN
-  ----------------------------------*/
+  /* ---------------------------------------------------
+      LOADING SCREEN
+  --------------------------------------------------- */
   if (loading) return <ResumeLoader />;
 
   if (!userId) {
@@ -152,15 +191,17 @@ export default function ResumeGenerator() {
     );
   }
 
+  /* ---------------------------------------------------
+      UI
+  --------------------------------------------------- */
   return (
     <div className="bg-mine-shaft-900 text-white p-6 sm:p-10 rounded-2xl shadow-xl border border-mine-shaft-700 max-w-4xl mx-auto">
 
-      {/* HEADER */}
       <h1 className="text-3xl sm:text-4xl font-bold text-bright-sun-300 mb-6 text-center">
         AI Resume Generator ⚡
       </h1>
 
-      {/* PROMPT INPUT */}
+      {/* INPUT FORM */}
       <form onSubmit={onGenerate} className="space-y-3">
         <label className="text-sm text-mine-shaft-300">Resume Prompt</label>
 
@@ -169,10 +210,8 @@ export default function ResumeGenerator() {
           onChange={(e) => setPrompt(e.target.value)}
           rows={4}
           className="w-full p-4 rounded-xl bg-mine-shaft-800 border border-mine-shaft-700 focus:border-bright-sun-300 outline-none transition text-mine-shaft-100"
-          placeholder="Write details about your experience, skills, project work..."
         ></textarea>
 
-        {/* BUTTONS */}
         <div className="flex flex-col sm:flex-row gap-4 pt-2">
           <button
             type="submit"
@@ -187,37 +226,31 @@ export default function ResumeGenerator() {
             disabled={!resumeText}
             className="px-5 py-3 border border-bright-sun-300 text-bright-sun-200 rounded-lg hover:bg-bright-sun-300 hover:text-black transition disabled:opacity-40"
           >
-            {paid ? "Download PDF" : "Pay ₹99 & Download"}
+            {paid ? "Download PDF" : "Pay ₹29 & Download"}
           </button>
         </div>
       </form>
 
-      {/* ERROR */}
       {error && (
         <p className="mt-4 text-red-400 text-sm font-semibold">{error}</p>
       )}
 
-      {/* RESUME PREVIEW */}
       {resumeText && (
         <div className="mt-8">
           <h3 className="text-2xl font-semibold text-bright-sun-200 mb-3">
             Resume Preview
           </h3>
-
-          <div
-            className="bg-white text-gray-900 p-6 rounded-xl shadow-lg leading-relaxed whitespace-pre-line"
-          >
+          <div className="bg-white text-gray-900 p-6 rounded-xl shadow-lg whitespace-pre-line leading-relaxed">
             {resumeText}
           </div>
         </div>
       )}
 
-      {/* PAYMENT POPUP */}
+      {/* Payment Popup */}
       <PaymentModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onPay={handlePay}
-        loading={payLoading}
+        onPay={startPayment}
       />
     </div>
   );

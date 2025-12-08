@@ -10,161 +10,186 @@ function VoiceAgent() {
 
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [showPrompt, setShowPrompt] = useState(false);
+  const [promptVisible, setPromptVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  /* ================================
-        COMMANDS TABLE
-  =================================*/
+  // ⭐ Backend AI chat endpoint
+  const AI_ENDPOINT =
+    "https://jobportalserver-production-0346.up.railway.app/api/ai/resume/chat";
+
+  /* ================================================
+      PAGE NAVIGATION COMMANDS
+  ================================================= */
   const commands = [
-    { keywords: ["upload job", "post job", "open upload", "add job"], path: "/upload-job" },
-    { keywords: ["find jobs", "jobs", "search jobs"], path: "/find-jobs" },
-    { keywords: ["find talent", "hire", "recruit"], path: "/find-talent" },
-    { keywords: ["view applications", "applications"], path: "/applications" },
-    { keywords: ["about", "about us"], path: "/about" },
-    { keywords: ["home", "homepage", "go home"], path: "/" },
-    { keywords: ["profile", "my profile"], path: "/profile" },
-    { keywords: ["login", "sign in"], path: "/login" },
-    { keywords: ["signup", "register"], path: "/signup" },
+    { keywords: ["upload job", "post job", "add job"], path: "/upload-job" },
+    { keywords: ["find jobs", "search jobs"], path: "/find-jobs" },
+    { keywords: ["find talent", "hire"], path: "/find-talent" },
+    { keywords: ["applications"], path: "/applications" },
+    { keywords: ["profile"], path: "/profile" },
+    { keywords: ["resume builder"], path: "/ai-resume-builder" },
+    { keywords: ["premium"], path: "/premium" },
+    { keywords: ["ats score"], path: "/ats-score" },
+    { keywords: ["resume tools"], path: "/resume-tools" },
+    { keywords: ["home", "go home"], path: "/" },
   ];
 
-  /* ======================================
-        TEXT-TO-SPEECH (Voice Output)
-  ======================================*/
+  /* =========================================================
+          TEXT-TO-SPEECH (AI Response Output)
+  ========================================================= */
   const speak = (text) => {
     const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = 1;
     utter.pitch = 1;
-    utter.volume = 1;
+    utter.rate = 1;
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utter);
   };
 
-  /* ==========================================
-        COMMAND MATCHING (Improved AI Logic)
-  ==========================================*/
-  const matchCommand = (text) => {
-    const normalized = text.toLowerCase();
-
+  /* =========================================================
+        CHECK IF USER SPOKE A COMMAND
+  ========================================================= */
+  const matchCommand = (spoken) => {
+    const normalized = spoken.toLowerCase();
     for (let cmd of commands) {
-      for (let word of cmd.keywords) {
-        if (normalized.includes(word)) return cmd.path;
+      for (let key of cmd.keywords) {
+        if (normalized.includes(key)) return cmd.path;
       }
     }
     return null;
   };
 
-  /* ======================================
-        INITIALIZE SPEECH RECOGNITION
-  ======================================*/
+  /* =========================================================
+        AI CHAT REQUEST (FOR QUESTIONS)
+  ========================================================= */
+  const askAI = async (question) => {
+    try {
+      const response = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: question }),
+      });
+
+      const data = await response.json();
+      const reply = data.reply || "Sorry, I am not sure about that.";
+
+      setTranscript("AI: " + reply);
+      speak(reply);
+
+    } catch (err) {
+      speak("I am unable to reach the server right now.");
+      console.error(err);
+    }
+  };
+
+  /* =========================================================
+         INITIALIZE VOICE ENGINE
+  ========================================================= */
   useEffect(() => {
     if (!SpeechRecognition) {
-      setErrorMsg("⚠ Your browser does not support voice recognition.");
+      setErrorMsg("Your browser does not support voice recognition.");
       return;
     }
 
     const recog = new SpeechRecognition();
     recog.lang = "en-US";
-    recog.continuous = false;
     recog.interimResults = false;
+    recog.continuous = false;
 
     recognitionRef.current = recog;
 
+    recog.onstart = () => setPromptVisible(true);
+
     recog.onresult = (event) => {
       const spoken = event.results[0][0].transcript;
-      setTranscript(spoken);
-      setShowPrompt(false);
+      setTranscript("You: " + spoken);
 
       const route = matchCommand(spoken);
 
       if (route) {
         speak("Opening " + route.replace("/", "").replace("-", " "));
-        setTimeout(() => navigate(route), 700);
+        setTimeout(() => navigate(route), 600);
       } else {
-        speak("Sorry, I didn't understand. Try saying: Find Jobs, Upload Job.");
+        askAI(spoken); // ⭐ AI MODE IF NOT A COMMAND
       }
     };
 
     recog.onerror = () => {
-      speak("I couldn't hear you clearly. Try again.");
+      speak("I couldn't understand. Please try again.");
       setListening(false);
     };
 
     recog.onend = () => {
       setListening(false);
-      setShowPrompt(false);
+      setPromptVisible(false);
     };
   }, []);
 
-  /* ======================================
-        START LISTENING
-  ======================================*/
+  /* =========================================================
+          START LISTENING
+  ========================================================= */
   const startListening = () => {
     if (!recognitionRef.current) return;
 
-    if (listening) return; // prevent double start
-
     setTranscript("");
     setListening(true);
-    setShowPrompt(true);
-
+    setPromptVisible(true);
     speak("I'm listening.");
 
     recognitionRef.current.start();
   };
 
-  /* ======================================
-        UI
-  ======================================*/
+  /* =========================================================
+                          UI
+  ========================================================= */
   return (
     <>
-      {/* ==== FLOATING MIC BUTTON ==== */}
+      {/* 🎤 Floating Mic Button */}
       <button
         onClick={startListening}
-        className={`fixed bottom-8 right-8 z-[9999] w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl shadow-xl transition-all duration-300 ${
-          listening ? "mic-glow bg-red-500" : "bg-bright-sun-300 hover:bg-bright-sun-200"
-        }`}
+        className={`fixed bottom-8 right-8 z-[9999] w-16 h-16 rounded-full flex items-center justify-center text-3xl shadow-xl transition-all duration-300 border border-white/20
+        ${listening ? "bg-red-500 animate-pulse" : "bg-yellow-400 hover:bg-yellow-300"}
+      `}
       >
         🎤
       </button>
 
-      {/* ==== PROMPT ==== */}
-      {showPrompt && (
-        <div className="fixed bottom-28 right-10 bg-black/70 backdrop-blur-md px-5 py-3 rounded-xl text-white text-sm animate-fadeIn z-[9999]">
-          Listening... say a command
+      {/* Listening Prompt */}
+      {promptVisible && (
+        <div className="fixed bottom-28 right-10 bg-black/70 backdrop-blur-xl px-5 py-3 rounded-xl text-white text-sm shadow-xl animate-fadeIn z-[9999]">
+          Listening…
         </div>
       )}
 
-      {/* ==== TRANSCRIPT ==== */}
+      {/* Transcript Display */}
       {transcript && (
-        <div className="fixed bottom-24 right-28 bg-black/40 px-4 py-2 text-white rounded-lg text-sm">
-          You said: <b>{transcript}</b>
+        <div className="fixed bottom-24 right-28 bg-black/50 backdrop-blur-lg px-4 py-2 rounded-lg text-white text-sm shadow-lg animate-fadeIn">
+          {transcript}
         </div>
       )}
 
-      {/* ==== ERROR MESSAGE ==== */}
+      {/* Error */}
       {errorMsg && (
-        <div className="fixed bottom-5 left-5 bg-red-500/20 border border-red-500 px-4 py-2 rounded-lg text-red-300 text-sm">
+        <div className="fixed bottom-5 left-5 bg-red-500/20 border border-red-500 text-red-300 px-4 py-2 rounded-lg text-sm">
           {errorMsg}
         </div>
       )}
 
-      {/* ==== CSS ANIMATIONS ==== */}
+      {/* Internal CSS */}
       <style>{`
-        .mic-glow {
-          animation: glow 1.2s infinite;
+        .animate-pulse {
+          animation: pulse 1.2s infinite;
         }
-        @keyframes glow {
-          0% { box-shadow: 0 0 10px #ff3b30; }
-          50% { box-shadow: 0 0 25px #ff8a65; }
-          100% { box-shadow: 0 0 10px #ff3b30; }
+        @keyframes pulse {
+          0% { box-shadow: 0 0 10px rgba(255,70,70,0.6); }
+          50% { box-shadow: 0 0 25px rgba(255,120,120,0.9); }
+          100% { box-shadow: 0 0 10px rgba(255,70,70,0.6); }
         }
 
         .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
+          animation: fadeIn 0.35s ease-out;
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(5px); }
+          from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>

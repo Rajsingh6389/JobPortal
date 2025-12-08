@@ -24,12 +24,16 @@ export const verifyPaymentApi = (data) =>
 // -----------------------------------------------------
 // ⭐ CHECK PAID STATUS (used in Dreamjob.jsx)
 // -----------------------------------------------------
+// -----------------------------------------------------
+// ⭐ CHECK PAID STATUS (correct backend route)
+// -----------------------------------------------------
 export const checkPaid = async (userId) => {
   try {
-    const res = await api2.get(`/users/${userId}`);
-    return res.data.paymentStatus === true;
+    const res = await api2.get(`/payment/check-paid/${userId}`);
+    return res.data.paid === true;
   } catch (err) {
     console.error("checkPaid error:", err);
     return false;
   }
 };
+
