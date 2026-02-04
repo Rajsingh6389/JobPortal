@@ -1,0 +1,23 @@
+[[redirects]]
+  from = "/api/*"
+  to = "http://65.1.132.98:8080/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/resume/*"
+  to = "http://65.1.132.98:8080/resume/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/auth/*"
+  to = "http://65.1.132.98:8080/auth/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/jobportal/*"
+  to = "http://65.1.132.98:8080/jobportal/:splat"
+  status = 200
+  force = true
