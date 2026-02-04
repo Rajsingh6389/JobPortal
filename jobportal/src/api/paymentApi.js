@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Backend Base URL (Railway)
-const BASE_URL2 = "https://jobportalserver-production-0346.up.railway.app/api";
+const BASE_URL2 = "http://65.1.132.98:8080/api";
 
 const api2 = axios.create({
   baseURL: BASE_URL2,

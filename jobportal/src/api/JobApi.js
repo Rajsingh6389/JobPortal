@@ -1,7 +1,7 @@
 import axios from "axios";
 // const API = "http://localhost:8080/jobportal/jobs";
 // const BASE_URL = "https://jobportalapplication-production.up.railway.app";
-const API = "https://jobportalserver-production-0346.up.railway.app/jobportal/jobs";
+const API = "http://65.1.132.98:8080/jobportal/jobs";
 export const getAllJobs = async () => axios.get(API);
 
 export const searchByTitle = async (title) =>
@@ -36,3 +36,16 @@ export const getExternalJobs = () => {
     }
   });
 };
+
+export const getInterships = () => {
+  const response= axios.get("https://internships-api.p.rapidapi.com/active-jb-7d", {
+    params: { query: "developer in india", num_pages: 1 },
+    headers: {
+      "X-RapidAPI-Key": import.meta.env.VITE_RAPID_KEY,
+      "X-RapidAPI-Host": "internships-api.p.rapidapi.comv",
+    }
+  });
+  return response;   // <-- THIS is the array used by jobs.map
+};
+
+

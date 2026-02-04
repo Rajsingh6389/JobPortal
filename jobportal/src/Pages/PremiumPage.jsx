@@ -115,10 +115,10 @@ function PremiumPage() {
       path: "/ai-resume-builder",
     },
     {
-      title: "Premium Templates",
+      title: "Apply for Interships",
       desc: "Select from 10+ beautifully designed resume templates.",
       icon: IconFileText,
-      path: "/premium-templates",
+      path: "/internships",
     },
     {
       title: "ATS Score Analyzer",

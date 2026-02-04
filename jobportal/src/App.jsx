@@ -4,8 +4,6 @@ import '@mantine/core/styles.css';
 import { createTheme, MantineProvider } from '@mantine/core';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import '@mantine/carousel/styles.css';
-import AiResumeBuilder from "./Pages/AiResumeBuilder";
-import PremiumTemplates from "./Pages/PremiumTemplates";
 import PdfExport from "./Pages/PdfExport";
 import Findjobs from './Pages/Findjobs';
 import Header from './Header/Header';
@@ -32,6 +30,7 @@ import ProtectedPremium from './Pages/ProtectedPremium';
 // ✅ Import ResumeTools
 import ResumeTools from "./Pages/ResumeTools";
 import ResumeCreator from './Pages/ResumeCreator';
+import Interships from './Pages/Interships';
 
 function App() {
   const theme = createTheme({
@@ -76,7 +75,7 @@ function App() {
           <Route path="/find-talent" element={<FindTalent />} />
           <Route path="/find-talent/user/:id" element={<AdminUserProfile />} />
           <Route path="/ai-resume-builder" element={<ResumeCreator />} />
-          <Route path="/premium-templates" element={<PremiumTemplates />} />
+          <Route path="/internships" element={<Interships />} />
           <Route path="/ats-score" element={<AtsAnalyzer />} />
           <Route path="/pdf-export" element={<PdfExport />} />
           <Route path="/resume-generator" element={<ResumeGenerator />} />

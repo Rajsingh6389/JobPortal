@@ -18,7 +18,7 @@ export default function AdminApplications() {
 // const BASE_URL = "https://jobportalapplication-production.up.railway.app/api/auth";
 
       const res = await axios.get(
-        "https://jobportalapplication-production.up.railway.app/jobportal/jobs/admin/applications",
+        "http://65.1.132.98:8080/jobportal/jobs/admin/applications",
         {
           headers: { Authorization: `Bearer ${token}` },
         }

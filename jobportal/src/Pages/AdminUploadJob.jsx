@@ -28,7 +28,7 @@ export default function AdminUploadJob() {
 
     try {
       await axios.post(
-        "https://jobportalserver-production-0346.up.railway.app/jobportal/jobs/admin/upload",
+        "http://65.1.132.98:8080/jobportal/jobs/admin/upload",
         job,
         { headers: { Authorization: `Bearer ${token}` } }
       );
