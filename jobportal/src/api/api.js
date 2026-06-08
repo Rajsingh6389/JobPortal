@@ -3,7 +3,7 @@ import axios from "axios";
 // =========================
 // API BASE URLs
 // =========================
-const BASE_URL ="http://65.1.132.98:8080";
+const BASE_URL ="https://jobportalserver-sjg2.onrender.com/api";
 // Resume / Payment API
 // const BASE_URL ="http://localhost:8080/api";
 

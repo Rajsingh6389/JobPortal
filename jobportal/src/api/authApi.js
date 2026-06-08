@@ -2,8 +2,8 @@ import axios from "axios";
 
 // const BASE_URL = "http://localhost:8080/api/auth";
 // const BASE_URL2 = "http://localhost:8080/api";
-const BASE_URL = "http://65.1.132.98:8080/api/auth";
-const BASE_URL2 = "http://65.1.132.98:8080/api";
+const BASE_URL = "https://jobportalserver-sjg2.onrender.com/api/auth";
+const BASE_URL2 = "https://jobportalserver-sjg2.onrender.com/api";
 
 
 

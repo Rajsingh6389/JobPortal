@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API = axios.create({
   // baseURL: "http://localhost:8080/api",
-  baseURL: "http://65.1.132.98:8080/api",
+  baseURL: "https://jobportalserver-sjg2.onrender.com/api",
 
 });
 
